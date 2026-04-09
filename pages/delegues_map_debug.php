@@ -17,7 +17,7 @@ if (file_exists($areasFile)) {
             if (empty($gov['Name']) || empty($gov['Delegations']) || !is_array($gov['Delegations'])) {
                 continue;
             }
-            $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $gov['Name']));
+            $govKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($gov['Name']));
             if (!isset($coordIndex[$govKey])) {
                 $coordIndex[$govKey] = [];
             }
@@ -25,7 +25,7 @@ if (file_exists($areasFile)) {
                 if (empty($del['Value']) || !isset($del['Latitude']) || !isset($del['Longitude'])) {
                     continue;
                 }
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $del['Value']));
+                $cityKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($del['Value']));
                 $coordIndex[$govKey][$cityKey] = [
                     'original_name' => (string) $del['Name'],
                     'value_name' => (string) $del['Value'],
@@ -126,8 +126,8 @@ foreach ($allCities as $city) {
     $govName = $govIdToName[$govId] ?? '';
     
     // Normalize names (simple approach without iconv for Windows compatibility)
-    $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $govName));
-    $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $cityName));
+    $govKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($govName));
+    $cityKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($cityName));
     
     // Debug: Show exact keys being generated
     $debugGovKey = $govKey;

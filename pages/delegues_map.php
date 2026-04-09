@@ -57,7 +57,7 @@ if (file_exists($areasFile)) {
             if (empty($gov['Name']) || empty($gov['Delegations']) || !is_array($gov['Delegations'])) {
                 continue;
             }
-            $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $gov['Name']));
+            $govKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($gov['Name']));
             if (!isset($coordIndex[$govKey])) {
                 $coordIndex[$govKey] = [];
             }
@@ -65,7 +65,7 @@ if (file_exists($areasFile)) {
                 if (empty($del['Value']) || !isset($del['Latitude']) || !isset($del['Longitude'])) {
                     continue;
                 }
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $del['Value']));
+                $cityKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($del['Value']));
                 $coordIndex[$govKey][$cityKey] = [
                     'lat' => (float) $del['Latitude'],
                     'lng' => (float) $del['Longitude'],
