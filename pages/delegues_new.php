@@ -109,6 +109,7 @@ try {
     $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
 } catch (Throwable $e) {
     $governorates = [];
+    $error = 'Erreur de chargement des gouvernorats: ' . $e->getMessage();
 }
 
 $page_title = 'Creer un delegue';
@@ -148,10 +149,35 @@ require __DIR__ . '/../includes/header.php';
         <label class="block text-sm font-medium text-slate-700">Gouvernorat</label>
         <select name="governorate_id" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" data-governorate-select required>
           <option value="">Choisir</option>
-          <?php foreach ($governorates as $gov): ?>
-            <option value="<?= (int) $gov['id'] ?>"><?= htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') ?></option>
-          <?php endforeach; ?>
+          <?php if (empty($governorates)): ?>
+            <option value="" disabled>Aucun gouvernorat disponible</option>
+          <?php else: ?>
+            <?php foreach ($governorates as $gov): ?>
+              <option value="<?= (int) $gov['id'] ?>"><?= htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') ?></option>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </select>
+        <?php if (empty($governorates)): ?>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-2">
+            <p class="text-xs text-amber-800 font-semibold mb-2">
+              <i class="fas fa-exclamation-triangle mr-1"></i>
+              La table des gouvernorats est vide
+            </p>
+            <p class="text-xs text-amber-700 mb-2">
+              Pour ajouter les gouvernorats, executez la commande suivante dans le terminal:
+            </p>
+            <code class="block bg-amber-100 text-xs text-amber-900 p-2 rounded overflow-x-auto">
+              vendor/bin/phinx seed:run
+            </code>
+            <p class="text-xs text-amber-700 mt-2">
+              Ou si vous n'avez pas Phinx installe:
+            </p>
+            <code class="block bg-amber-100 text-xs text-amber-900 p-2 rounded overflow-x-auto">
+              composer install<br>
+              vendor/bin/phinx seed:run
+            </code>
+          </div>
+        <?php endif; ?>
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-700">Delegations exclues</label>
