@@ -174,13 +174,23 @@ try {
 }
 
 try {
+    // Try to query with new columns
     $reps = db()->query("SELECT u.id, u.name, u.email, u.phone, u.zone, u.active, u.created_at, u.governorate_id, u.governorate_ids, u.excluded_city_ids, g.name_fr AS governorate_name
         FROM users u
         LEFT JOIN governorates g ON g.id = u.governorate_id
         WHERE u.role = 'rep'
         ORDER BY u.id DESC")->fetchAll();
 } catch (Throwable $e) {
-    $reps = [];
+    // Fallback to old columns if new columns don't exist
+    try {
+        $reps = db()->query("SELECT u.id, u.name, u.email, u.phone, u.zone, u.active, u.created_at, u.governorate_id, NULL as governorate_ids, NULL as excluded_city_ids, g.name_fr AS governorate_name
+            FROM users u
+            LEFT JOIN governorates g ON g.id = u.governorate_id
+            WHERE u.role = 'rep'
+            ORDER BY u.id DESC")->fetchAll();
+    } catch (Throwable $e2) {
+        $reps = [];
+    }
 }
 
 // Calculate stats for last 30 days
