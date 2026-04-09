@@ -129,6 +129,13 @@ foreach ($allCities as $city) {
     $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $govName));
     $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $cityName));
     
+    // Debug: Show exact keys being generated
+    $debugGovKey = $govKey;
+    $debugCityKey = $cityKey;
+    $debugGovExists = isset($coordIndex[$govKey]);
+    $debugGovNameRaw = $govName;
+    $debugGovNameBytes = implode(' ', array_map('ord', str_split($govName)));
+    
     // Check if coordinate exists
     $hasCoord = isset($coordIndex[$govKey][$cityKey]);
     
@@ -173,6 +180,16 @@ require __DIR__ . '/../includes/header.php';
     </div>
     
     <h3 class="text-sm font-semibold text-slate-900 mb-3">Cities Analysis</h3>
+    
+    <?php if (!empty($results)): ?>
+      <div class="mb-4 p-3 rounded-lg bg-blue-50 text-xs">
+        <strong>Key Generation Debug (first city only):</strong><br>
+        DB Governorate Name: <?= htmlspecialchars($debugGovNameRaw, ENT_QUOTES, 'UTF-8') ?><br>
+        DB Governorate Bytes: <?= htmlspecialchars($debugGovNameBytes, ENT_QUOTES, 'UTF-8') ?><br>
+        Generated Key: <?= htmlspecialchars($debugGovKey, ENT_QUOTES, 'UTF-8') ?><br>
+        Key Exists in coordIndex: <?= $debugGovExists ? 'YES' : 'NO' ?>
+      </div>
+    <?php endif; ?>
     
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
