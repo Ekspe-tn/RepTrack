@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_role('rep');
+require_login();
 
 $basePath = dirname(__DIR__);
 $success = '';
