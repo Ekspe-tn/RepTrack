@@ -67,6 +67,10 @@ switch ($path) {
         require_login();
         require $basePath . '/pages/contacts.php';
         break;
+    case '/contacts_new':
+        require_login();
+        require $basePath . '/pages/contacts_new.php';
+        break;
     case '/visits':
         require_login();
         require $basePath . '/pages/visits_list.php';
