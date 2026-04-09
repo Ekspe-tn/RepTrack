@@ -57,7 +57,7 @@ if (file_exists($areasFile)) {
             if (empty($gov['Name']) || empty($gov['Delegations']) || !is_array($gov['Delegations'])) {
                 continue;
             }
-            $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $gov['Name'])));
+            $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $gov['Name']));
             if (!isset($coordIndex[$govKey])) {
                 $coordIndex[$govKey] = [];
             }
@@ -65,7 +65,7 @@ if (file_exists($areasFile)) {
                 if (empty($del['Value']) || !isset($del['Latitude']) || !isset($del['Longitude'])) {
                     continue;
                 }
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $del['Value'])));
+                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $del['Value']));
                 $coordIndex[$govKey][$cityKey] = [
                     'lat' => (float) $del['Latitude'],
                     'lng' => (float) $del['Longitude'],
@@ -175,8 +175,8 @@ foreach ($reps as $rep) {
                 
                 // Get governorate name and create normalized keys
                 $govName = $govIdToName[$govId] ?? '';
-                $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $govName)));
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $cityName)));
+                $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $govName));
+                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $cityName));
                 
                 // Add point if coordinates available
                 if (isset($coordIndex[$govKey][$cityKey])) {
