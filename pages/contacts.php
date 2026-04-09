@@ -205,91 +205,109 @@ require __DIR__ . '/../includes/header.php';
       </div>
     <?php endif; ?>
 
-    <form method="post" class="mt-4 grid grid-cols-1 gap-3" x-show="open" data-city-group>
+    <form method="post" class="mt-4 space-y-6" x-show="open" data-city-group>
       <?= csrf_field() ?>
       <?php if ($editing && $editContact): ?>
         <input type="hidden" name="id" value="<?= (int) $editContact['id'] ?>">
       <?php endif; ?>
+      
+      <!-- Basic Information -->
       <div>
-        <label class="block text-sm font-medium text-slate-700">Type</label>
-        <select name="type" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" required data-type-select>
-          <?php
-          $types = ['doctor' => 'Medecin', 'pharmacy' => 'Pharmacie', 'parapharmacie' => 'Parapharmacie', 'clinic' => 'Clinique', 'hospital' => 'Hopital'];
-          $selectedType = $editContact['type'] ?? 'doctor';
-          foreach ($types as $value => $label):
-              $selected = $selectedType === $value ? 'selected' : '';
-              echo "<option value=\"$value\" $selected>$label</option>";
-          endforeach;
-          ?>
-        </select>
+        <h3 class="text-sm font-semibold text-slate-800 mb-3">Informations de base</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Type</label>
+            <select name="type" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" required data-type-select>
+              <?php
+              $types = ['doctor' => 'Medecin', 'pharmacy' => 'Pharmacie', 'parapharmacie' => 'Parapharmacie', 'clinic' => 'Clinique', 'hospital' => 'Hopital'];
+              $selectedType = $editContact['type'] ?? 'doctor';
+              foreach ($types as $value => $label):
+                  $selected = $selectedType === $value ? 'selected' : '';
+                  echo "<option value=\"$value\" $selected>$label</option>";
+              endforeach;
+              ?>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Nom</label>
+            <input type="text" name="name" value="<?= htmlspecialchars($editContact['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" required>
+          </div>
+        </div>
+        <div data-specialty-field class="hidden mt-4">
+          <label class="block text-sm font-medium text-slate-700">Specialite</label>
+          <input type="text" name="specialty" value="<?= htmlspecialchars($editContact['specialty'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" data-specialty-input>
+        </div>
       </div>
+
+      <!-- Location -->
       <div>
-        <label class="block text-sm font-medium text-slate-700">Nom</label>
-        <input type="text" name="name" value="<?= htmlspecialchars($editContact['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" required>
+        <h3 class="text-sm font-semibold text-slate-800 mb-3">Localisation</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Gouvernorat</label>
+            <select name="governorate_id" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" data-governorate-select required>
+              <option value="">Choisir</option>
+              <?php
+              $selectedGov = (int) ($editContact['governorate_id'] ?? 0);
+              foreach ($governorates as $gov):
+                  $selected = $selectedGov === (int) $gov['id'] ? 'selected' : '';
+                  echo '<option value="' . (int) $gov['id'] . '" ' . $selected . '>' . htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') . '</option>';
+              endforeach;
+              ?>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Delegation</label>
+            <select name="city_id" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" data-city-select data-city-selected="<?= (int) ($editContact['city_id'] ?? 0) ?>" required>
+              <option value="">Choisir</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-700">Adresse</label>
+          <input type="text" name="address" value="<?= htmlspecialchars($editContact['address'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+        </div>
       </div>
-      <div data-specialty-field class="hidden">
-        <label class="block text-sm font-medium text-slate-700">Specialite</label>
-        <input type="text" name="specialty" value="<?= htmlspecialchars($editContact['specialty'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" data-specialty-input>
-      </div>
-      <div class="grid grid-cols-1 gap-3">
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Gouvernorat</label>
-          <select name="governorate_id" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" data-governorate-select required>
-            <option value="">Choisir</option>
+
+      <!-- Contact Info -->
+      <div>
+        <h3 class="text-sm font-semibold text-slate-800 mb-3">Contact</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Telephone</label>
+            <input type="text" name="phone" value="<?= htmlspecialchars($editContact['phone'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Email</label>
+            <input type="email" name="email" value="<?= htmlspecialchars($editContact['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-700">Personne a contacter</label>
+          <input type="text" name="contact_person" value="<?= htmlspecialchars($editContact['contact_person'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-700">Assigner a</label>
+          <select name="assigned_rep_id" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+            <option value="">Non assigne</option>
             <?php
-            $selectedGov = (int) ($editContact['governorate_id'] ?? 0);
-            foreach ($governorates as $gov):
-                $selected = $selectedGov === (int) $gov['id'] ? 'selected' : '';
-                echo '<option value="' . (int) $gov['id'] . '" ' . $selected . '>' . htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') . '</option>';
+            $selectedRep = (int) ($editContact['assigned_rep_id'] ?? 0);
+            foreach ($reps as $rep):
+                $selected = $selectedRep === (int) $rep['id'] ? 'selected' : '';
+                echo '<option value="' . (int) $rep['id'] . '" ' . $selected . '>' . htmlspecialchars($rep['name'], ENT_QUOTES, 'UTF-8') . '</option>';
             endforeach;
             ?>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Delegation</label>
-          <select name="city_id" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" data-city-select data-city-selected="<?= (int) ($editContact['city_id'] ?? 0) ?>" required>
-            <option value="">Choisir</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Adresse</label>
-        <input type="text" name="address" value="<?= htmlspecialchars($editContact['address'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-      </div>
-      <div class="grid grid-cols-1 gap-3">
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Telephone</label>
-          <input type="text" name="phone" value="<?= htmlspecialchars($editContact['phone'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Email</label>
-          <input type="email" name="email" value="<?= htmlspecialchars($editContact['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-        </div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Personne a contacter</label>
-        <input type="text" name="contact_person" value="<?= htmlspecialchars($editContact['contact_person'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Assigner a</label>
-        <select name="assigned_rep_id" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-          <option value="">Non assigne</option>
-          <?php
-          $selectedRep = (int) ($editContact['assigned_rep_id'] ?? 0);
-          foreach ($reps as $rep):
-              $selected = $selectedRep === (int) $rep['id'] ? 'selected' : '';
-              echo '<option value="' . (int) $rep['id'] . '" ' . $selected . '>' . htmlspecialchars($rep['name'], ENT_QUOTES, 'UTF-8') . '</option>';
-          endforeach;
-          ?>
-        </select>
       </div>
 
-      <div class="border-t border-slate-100 pt-3">
-        <h3 class="text-sm font-semibold text-slate-800">Segmentation</h3>
-        <div class="grid grid-cols-1 gap-3 mt-2">
+      <!-- Segmentation -->
+      <div class="border-t border-slate-100 pt-6">
+        <h3 class="text-sm font-semibold text-slate-800 mb-3">Segmentation</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700">Statut</label>
-            <select name="status" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
+            <select name="status" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
               <?php
               $statusOptions = ['chain' => 'Chain', 'independent' => 'Independent', 'group' => 'Group', 'hospital_public' => 'Hospital public', 'clinic_private' => 'Clinic privee'];
               $selectedStatus = $editContact['status'] ?? 'independent';
@@ -302,7 +320,7 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Potentiel</label>
-            <select name="potential" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
+            <select name="potential" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
               <?php
               $potentialOptions = ['A', 'B', 'C'];
               $selectedPotential = $editContact['potential'] ?? 'B';
@@ -315,7 +333,7 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Type de client</label>
-            <select name="client_type" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
+            <select name="client_type" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
               <?php
               $clientOptions = ['local' => 'Local', 'tourist' => 'Tourist', 'specialized' => 'Specialise', 'mixed' => 'Mixte'];
               $selectedClient = $editContact['client_type'] ?? 'local';
@@ -328,7 +346,7 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Historique</label>
-            <select name="collaboration_history" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
+            <select name="collaboration_history" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
               <?php
               $historyOptions = ['new' => 'Nouveau', 'occasional' => 'Occasionnel', 'regular' => 'Regulier', 'key_account' => 'Key account'];
               $selectedHistory = $editContact['collaboration_history'] ?? 'new';
@@ -341,7 +359,7 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Engagement</label>
-            <select name="team_engagement" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
+            <select name="team_engagement" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
               <?php
               $engagementOptions = ['low' => 'Faible', 'medium' => 'Moyen', 'high' => 'Eleve'];
               $selectedEngagement = $editContact['team_engagement'] ?? 'medium';
@@ -352,118 +370,169 @@ require __DIR__ . '/../includes/header.php';
               ?>
             </select>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Frequence de visite (jours)</label>
+            <input type="number" name="visit_frequency_days" value="<?= htmlspecialchars((string) ($editContact['visit_frequency_days'] ?? 30), ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3">
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-6">
           <label class="inline-flex items-center gap-2 text-sm text-slate-600">
             <input type="checkbox" name="plv_present" <?= !empty($editContact['plv_present']) ? 'checked' : '' ?>>
             PLV presente
           </label>
-          <div>
-            <label class="block text-sm font-medium text-slate-700">Frequence de visite (jours)</label>
-            <input type="number" name="visit_frequency_days" value="<?= htmlspecialchars((string) ($editContact['visit_frequency_days'] ?? 30), ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label class="block text-sm font-medium text-slate-700">Besoins specifiques</label>
-            <textarea name="specific_needs" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" rows="2"><?= htmlspecialchars($editContact['specific_needs'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+            <textarea name="specific_needs" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" rows="2"><?= htmlspecialchars($editContact['specific_needs'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Notes</label>
-            <textarea name="notes" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" rows="2"><?= htmlspecialchars($editContact['notes'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+            <textarea name="notes" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" rows="2"><?= htmlspecialchars($editContact['notes'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
           </div>
         </div>
       </div>
 
-      <label class="inline-flex items-center gap-2 text-sm text-slate-600">
-        <input type="checkbox" name="active" <?= !isset($editContact['active']) || (int) $editContact['active'] === 1 ? 'checked' : '' ?>>
-        Actif
-      </label>
-      <button type="submit" class="h-12 rounded-xl bg-blue-600 text-white font-semibold active:scale-[0.98]">
-        <?= $editing ? 'Mettre a jour' : 'Enregistrer' ?>
-      </button>
+      <!-- Actions -->
+      <div class="flex items-center justify-between gap-4">
+        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+          <input type="checkbox" name="active" <?= !isset($editContact['active']) || (int) $editContact['active'] === 1 ? 'checked' : '' ?>>
+          Actif
+        </label>
+        <button type="submit" class="h-11 px-8 rounded-lg bg-blue-600 text-white font-semibold active:scale-[0.98] transition-transform">
+          <?= $editing ? 'Mettre a jour' : 'Enregistrer' ?>
+        </button>
+      </div>
     </form>
   </div>
 
   <div class="bg-white rounded-2xl shadow-sm p-4">
-    <h2 class="text-base font-semibold text-slate-900">Contacts recents</h2>
+    <h2 class="text-base font-semibold text-slate-900 mb-4">Contacts recents</h2>
 
-    <form method="get" class="mt-3 grid grid-cols-1 gap-3">
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Recherche rapide</label>
-        <input type="text" name="q" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" placeholder="Nom, email, telephone">
+    <form method="get" class="mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="md:col-span-2">
+          <input type="text" name="q" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm" placeholder="Rechercher...">
+        </div>
+        <div>
+          <select name="gov" class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+            <option value="">Tous gouvernorats</option>
+            <?php foreach ($governorates as $gov): ?>
+              <option value="<?= (int) $gov['id'] ?>" <?= $filterGov === (int) $gov['id'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <button type="submit" class="w-full h-10 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">
+            Filtrer
+          </button>
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Gouvernorat</label>
-        <select name="gov" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-          <option value="">Tous</option>
-          <?php foreach ($governorates as $gov): ?>
-            <option value="<?= (int) $gov['id'] ?>" <?= $filterGov === (int) $gov['id'] ? 'selected' : '' ?>>
-              <?= htmlspecialchars($gov['name_fr'], ENT_QUOTES, 'UTF-8') ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
+      <div class="grid grid-cols-3 gap-4 mt-3">
+        <div>
+          <select name="type" class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+            <option value="">Tous types</option>
+            <?php foreach (['doctor' => 'Medecin', 'pharmacy' => 'Pharmacie', 'parapharmacie' => 'Parapharmacie', 'clinic' => 'Clinique', 'hospital' => 'Hopital'] as $value => $label): ?>
+              <option value="<?= $value ?>" <?= $filterType === $value ? 'selected' : '' ?>><?= $label ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <select name="potential" class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+            <option value="">Tous potentiels</option>
+            <?php foreach (['A', 'B', 'C'] as $value): ?>
+              <option value="<?= $value ?>" <?= $filterPotential === $value ? 'selected' : '' ?>><?= $value ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Type</label>
-        <select name="type" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-          <option value="">Tous</option>
-          <?php foreach (['doctor' => 'Medecin', 'pharmacy' => 'Pharmacie', 'parapharmacie' => 'Parapharmacie', 'clinic' => 'Clinique', 'hospital' => 'Hopital'] as $value => $label): ?>
-            <option value="<?= $value ?>" <?= $filterType === $value ? 'selected' : '' ?>><?= $label ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700">Potentiel</label>
-        <select name="potential" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3">
-          <option value="">Tous</option>
-          <?php foreach (['A', 'B', 'C'] as $value): ?>
-            <option value="<?= $value ?>" <?= $filterPotential === $value ? 'selected' : '' ?>><?= $value ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <button type="submit" class="h-12 rounded-xl bg-slate-900 text-white font-semibold">Filtrer</button>
     </form>
 
-    <div class="mt-3 space-y-3">
+    <div class="space-y-2">
       <?php if (empty($contacts)): ?>
-        <p class="text-sm text-slate-600">Aucun contact pour le moment.</p>
+        <p class="text-sm text-slate-600 text-center py-8">Aucun contact pour le moment.</p>
       <?php else: ?>
-        <?php foreach ($contacts as $contact): ?>
-          <div class="border border-slate-100 rounded-xl px-3 py-2 space-y-2">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-sm font-medium text-slate-900">
-                  <?= htmlspecialchars($contact['name'], ENT_QUOTES, 'UTF-8') ?>
-                </div>
-                <div class="text-xs text-slate-500">
-                  <?= htmlspecialchars($contact['governorate_name'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($contact['city_name'], ENT_QUOTES, 'UTF-8') ?>
-                </div>
-                <div class="text-xs text-slate-400">Potentiel: <?= htmlspecialchars($contact['potential'], ENT_QUOTES, 'UTF-8') ?></div>
-              </div>
-              <div class="text-xs text-slate-500 text-right">
-                <div><?= htmlspecialchars($contact['type'], ENT_QUOTES, 'UTF-8') ?></div>
-                <div><?= (int) $contact['active'] === 1 ? 'Actif' : 'Inactif' ?></div>
-                <a class="text-blue-600" href="/contacts?edit=<?= (int) $contact['id'] ?>">Edit</a>
-              </div>
-            </div>
-
-            <form method="post" class="grid grid-cols-1 gap-2">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="quick_update">
-              <input type="hidden" name="contact_id" value="<?= (int) $contact['id'] ?>">
-              <div>
-                <label class="block text-xs text-slate-500">Potentiel</label>
-                <select name="potential" class="mt-1 w-full h-10 rounded-xl border border-slate-200 px-3">
-                  <?php foreach (['A', 'B', 'C'] as $value): ?>
-                    <option value="<?= $value ?>" <?= $contact['potential'] === $value ? 'selected' : '' ?>><?= $value ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-              <label class="inline-flex items-center gap-2 text-sm text-slate-600">
-                <input type="checkbox" name="active" <?= (int) $contact['active'] === 1 ? 'checked' : '' ?>>
-                Actif
-              </label>
-              <button type="submit" class="h-10 rounded-xl bg-slate-900 text-white text-sm">Sauvegarder</button>
-            </form>
-          </div>
-        <?php endforeach; ?>
+        <div class="overflow-hidden rounded-lg border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nom</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Localisation</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Potentiel</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Statut</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              <?php foreach ($contacts as $contact): ?>
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-slate-900">
+                      <?= htmlspecialchars($contact['name'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      <?= htmlspecialchars($contact['phone'] ?: '-', ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-sm text-slate-700">
+                      <?= htmlspecialchars($contact['governorate_name'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      <?= htmlspecialchars($contact['city_name'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <?= htmlspecialchars($contact['type'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                      <?= $contact['potential'] === 'A' ? 'bg-green-100 text-green-800' : 
+                         ($contact['potential'] === 'B' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') ?>">
+                      <?= htmlspecialchars($contact['potential'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                      <?= (int) $contact['active'] === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                      <?= (int) $contact['active'] === 1 ? 'Actif' : 'Inactif' ?>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <a href="/contacts?edit=<?= (int) $contact['id'] ?>" 
+                         class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        Modifier
+                      </a>
+                      <form method="post" class="inline-flex items-center gap-2" x-data="{ open: false }">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="quick_update">
+                        <input type="hidden" name="contact_id" value="<?= (int) $contact['id'] ?>">
+                        <select name="potential" class="h-8 rounded border border-slate-200 px-2 text-xs" 
+                                onchange="this.form.submit()">
+                          <?php foreach (['A', 'B', 'C'] as $value): ?>
+                            <option value="<?= $value ?>" <?= $contact['potential'] === $value ? 'selected' : '' ?>><?= $value ?></option>
+                          <?php endforeach; ?>
+                        </select>
+                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                          <input type="checkbox" name="active" <?= (int) $contact['active'] === 1 ? 'checked' : '' ?> 
+                                 class="rounded border-slate-300"
+                                 onchange="this.form.submit()">
+                          <span class="text-xs text-slate-600">Actif</span>
+                        </label>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
       <?php endif; ?>
     </div>
   </div>
