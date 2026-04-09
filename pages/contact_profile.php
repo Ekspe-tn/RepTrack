@@ -150,7 +150,7 @@ require __DIR__ . '/../includes/header.php';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold text-slate-900"><?= htmlspecialchars($contact['name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></h1>
       <p class="text-sm text-slate-500 mt-1">
@@ -168,6 +168,12 @@ require __DIR__ . '/../includes/header.php';
         <i class="fas fa-calendar-plus"></i>
         <span>Nouvelle visite</span>
       </a>
+      <?php if ($role === 'admin' && $visitsTotal === 0): ?>
+      <button type="button" onclick="deleteContact()" class="h-10 px-4 rounded-xl bg-red-600 text-white text-sm font-semibold flex items-center gap-2 hover:bg-red-700">
+        <i class="fas fa-trash"></i>
+        <span>Supprimer</span>
+      </button>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -352,5 +358,38 @@ require __DIR__ . '/../includes/header.php';
     <?php endif; ?>
   </div>
 </div>
+
+<?php if ($role === 'admin' && $visitsTotal === 0): ?>
+<script>
+function deleteContact() {
+    if (!confirm('Etes-vous sur de vouloir supprimer ce contact ? Cette action est irreversible.')) {
+        return;
+    }
+    
+    const contactId = <?= (int) $contactId ?>;
+    
+    fetch('/api/delete_contact.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `contact_id=${contactId}&csrf_token=<?= csrf_token() ?>`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Contact supprime avec succes.');
+            window.location.href = '/contacts';
+        } else {
+            alert(data.error || 'Erreur lors de la suppression du contact.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la suppression du contact.');
+    });
+}
+</script>
+<?php endif; ?>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>
