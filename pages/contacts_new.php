@@ -27,7 +27,7 @@ try {
 }
 
 try {
-    $reps = db()->query("SELECT id, name FROM users WHERE role = 'rep' AND active = 1 ORDER BY name")->fetchAll();
+    $reps = db()->query("SELECT id, name, governorates FROM users WHERE role = 'rep' AND active = 1 ORDER BY name")->fetchAll();
 } catch (Throwable $e) {
     $reps = [];
 }
@@ -403,5 +403,57 @@ require __DIR__ . '/../includes/header.php';
     </form>
   </div>
 </div>
+
+<script>
+// Encode reps data for JavaScript
+const repsData = <?= json_encode($reps, JSON_UNESCAPED_UNICODE) ?>;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const governorateSelect = document.querySelector('[data-governorate-select]');
+    const repSelect = document.querySelector('select[name="assigned_rep_id"]');
+    
+    if (!governorateSelect || !repSelect) return;
+    
+    governorateSelect.addEventListener('change', function() {
+        const selectedGovId = parseInt(this.value);
+        
+        if (!selectedGovId) {
+            // Clear rep selection
+            repSelect.value = '';
+            return;
+        }
+        
+        // Find rep assigned to this governorate
+        let matchedRep = null;
+        
+        for (const rep of repsData) {
+            if (!rep.governorates) continue;
+            
+            // Parse governorates (can be comma-separated IDs or names)
+            const govAssignments = rep.governorates.toString().split(',').map(g => g.trim());
+            
+            // Check if governorate ID matches
+            if (govAssignments.includes(selectedGovId.toString())) {
+                matchedRep = rep;
+                break;
+            }
+            
+            // Also check governorate names
+            const selectedGovName = this.options[this.selectedIndex].text;
+            if (govAssignments.includes(selectedGovName)) {
+                matchedRep = rep;
+                break;
+            }
+        }
+        
+        // Auto-select the matched rep
+        if (matchedRep) {
+            repSelect.value = matchedRep.id.toString();
+        } else {
+            repSelect.value = '';
+        }
+    });
+});
+</script>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>
