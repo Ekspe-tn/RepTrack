@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Contact invalide.';
         } elseif ($plusCode !== '') {
             // Convert Plus Code to lat/long using Google Maps API
-            $apiKey = getenv('GOOGLE_MAPS_API_KEY') ?: '';
+            $apiKey = env_value('GOOGLE_MAPS_API_KEY') ?: '';
             if ($apiKey === '') {
                 $error = 'API Google Maps non configuree. Ajoutez GOOGLE_MAPS_API_KEY dans le fichier .env';
             } else {
