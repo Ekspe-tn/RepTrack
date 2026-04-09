@@ -175,8 +175,8 @@ foreach ($reps as $rep) {
                 
                 // Get governorate name and create normalized keys
                 $govName = $govIdToName[$govId] ?? '';
-                $govKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $govName));
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', $cityName));
+                $govKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($govName));
+                $cityKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($cityName));
                 
                 // Add point if coordinates available
                 if (isset($coordIndex[$govKey][$cityKey])) {
