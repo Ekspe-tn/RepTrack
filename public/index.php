@@ -71,6 +71,10 @@ switch ($path) {
         require_login();
         require $basePath . '/pages/contacts_new.php';
         break;
+    case '/contacts/view':
+        require_login();
+        require $basePath . '/pages/contact_profile.php';
+        break;
     case '/visits':
         require_login();
         require $basePath . '/pages/visits_list.php';
@@ -126,6 +130,10 @@ switch ($path) {
     case '/delegues/map/debug':
         require_role('admin');
         require $basePath . '/pages/delegues_map_debug.php';
+        break;
+    case '/help/gps':
+        require_login();
+        require $basePath . '/pages/help_gps.php';
         break;
     case '/products/new':
         require_role('admin');
