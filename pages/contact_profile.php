@@ -37,22 +37,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $plusCodeEncoded = urlencode($plusCode);
                 $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={$plusCodeEncoded}&key={$apiKey}";
-                $response = file_get_contents($geocodeUrl);
-                $data = json_decode($response, true);
                 
-                if ($data && $data['status'] === 'OK' && !empty($data['results'])) {
-                    $lat = $data['results'][0]['geometry']['location']['lat'];
-                    $lng = $data['results'][0]['geometry']['location']['lng'];
-                    
-                    try {
-                        $stmt = db()->prepare('UPDATE contacts SET latitude = ?, longitude = ? WHERE id = ?');
-                        $stmt->execute([$lat, $lng, $contactId]);
-                        $success = 'Coordonnees GPS enregistrees depuis le Plus Code.';
-                    } catch (Throwable $e) {
-                        $error = 'Impossible de mettre a jour les coordonnees.';
-                    }
+                // Use cURL for better error handling
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $geocodeUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
+                curl_close($ch);
+                
+                if ($curlError) {
+                    $error = 'Erreur de connexion a Google Maps: ' . $curlError;
+                } elseif ($httpCode !== 200) {
+                    $error = 'Erreur HTTP ' . $httpCode . ' de Google Maps. Verifiez votre API key.';
                 } else {
-                    $error = 'Plus Code invalide ou introuvable.';
+                    $data = json_decode($response, true);
+                    
+                    if ($data === null) {
+                        $error = 'Reponse invalide de Google Maps.';
+                    } elseif (!isset($data['status'])) {
+                        $error = 'Format de reponse Google Maps invalide.';
+                    } else {
+                        // Handle different API response statuses
+                        switch ($data['status']) {
+                            case 'OK':
+                                if (!empty($data['results'])) {
+                                    $lat = $data['results'][0]['geometry']['location']['lat'];
+                                    $lng = $data['results'][0]['geometry']['location']['lng'];
+                                    
+                                    try {
+                                        $stmt = db()->prepare('UPDATE contacts SET latitude = ?, longitude = ? WHERE id = ?');
+                                        $stmt->execute([$lat, $lng, $contactId]);
+                                        $success = 'Coordonnees GPS enregistrees depuis le Plus Code.';
+                                    } catch (Throwable $e) {
+                                        $error = 'Impossible de mettre a jour les coordonnees.';
+                                    }
+                                } else {
+                                    $error = 'Aucun resultat trouve pour ce Plus Code.';
+                                }
+                                break;
+                                
+                            case 'ZERO_RESULTS':
+                                $error = 'Plus Code non trouve. Verifiez le format (ex: QP4V+9X Sfax).';
+                                break;
+                                
+                            case 'OVER_DAILY_LIMIT':
+                                $error = 'Quota Google Maps depassee. Contactez l\'administrateur.';
+                                break;
+                                
+                            case 'OVER_QUERY_LIMIT':
+                                $error = 'Trop de requetes Google Maps. Reessayez plus tard.';
+                                break;
+                                
+                            case 'REQUEST_DENIED':
+                                $error = 'API key Google Maps invalide ou refusee. Verifiez votre configuration.';
+                                break;
+                                
+                            case 'INVALID_REQUEST':
+                                $error = 'Requete Google Maps invalide. Verifiez le format du Plus Code.';
+                                break;
+                                
+                            case 'UNKNOWN_ERROR':
+                                $error = 'Erreur serveur Google Maps. Reessayez plus tard.';
+                                break;
+                                
+                            default:
+                                $error = 'Erreur Google Maps: ' . $data['status'];
+                                if (isset($data['error_message'])) {
+                                    $error .= ' - ' . $data['error_message'];
+                                }
+                                break;
+                        }
+                    }
                 }
             }
         } elseif ($latRaw === '' || $lngRaw === '') {
