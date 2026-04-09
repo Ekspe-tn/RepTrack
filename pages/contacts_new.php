@@ -7,8 +7,21 @@ $error = '';
 $editing = isset($_GET['edit']);
 $editContact = null;
 
+$user = current_user();
 try {
-    $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    if ($user['role'] === 'rep') {
+        // Get only governorates assigned to this rep
+        $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
+            FROM governorates g
+            JOIN users u ON (FIND_IN_SET(g.id, u.governorates) > 0 OR FIND_IN_SET(g.name_fr, u.governorates) > 0)
+            WHERE u.id = ?
+            ORDER BY g.name_fr');
+        $stmt->execute([$user['id']]);
+        $governorates = $stmt->fetchAll();
+    } else {
+        // Admins see all governorates
+        $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    }
 } catch (Throwable $e) {
     $governorates = [];
 }

@@ -7,23 +7,46 @@ require_login();
 $basePath = dirname(__DIR__);
 $success = '';
 $error = '';
+$user = current_user();
 
-// Fetch all governorates
+// Fetch governorates based on user role
 try {
-    $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    if ($user['role'] === 'rep') {
+        $userId = $user['id'];
+        $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
+            FROM governorates g
+            JOIN users u ON (FIND_IN_SET(g.id, u.governorates) > 0 OR FIND_IN_SET(g.name_fr, u.governorates) > 0)
+            WHERE u.id = ?
+            ORDER BY g.name_fr');
+        $stmt->execute([$userId]);
+        $governorates = $stmt->fetchAll();
+    } else {
+        $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    }
 } catch (Throwable $e) {
     $governorates = [];
 }
 
-// Fetch contacts with GPS coordinates
+// Fetch contacts with GPS coordinates based on user role
 try {
-    $contacts = db()->query("SELECT c.id, c.name, c.type, c.latitude, c.longitude, c.city_id, 
+    $sql = "SELECT c.id, c.name, c.type, c.latitude, c.longitude, c.city_id, 
         ci.name_fr AS city_name, ci.governorate_id, g.name_fr AS governorate_name
         FROM contacts c
         LEFT JOIN cities ci ON ci.id = c.city_id
         LEFT JOIN governorates g ON g.id = ci.governorate_id
-        WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
-        ORDER BY c.name")->fetchAll();
+        WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL";
+    
+    if ($user['role'] === 'rep') {
+        $userId = $user['id'];
+        $sql .= " AND (FIND_IN_SET(ci.governorate_id, 
+            (SELECT governorates FROM users WHERE id = ?)
+        ) > 0)";
+        $stmt = db()->prepare($sql . " ORDER BY c.name");
+        $stmt->execute([$userId]);
+        $contacts = $stmt->fetchAll();
+    } else {
+        $contacts = db()->query($sql . " ORDER BY c.name")->fetchAll();
+    }
 } catch (Throwable $e) {
     $contacts = [];
 }

@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $twilioSid = trim((string) ($_POST['twilio_account_sid'] ?? ''));
             $twilioToken = trim((string) ($_POST['twilio_auth_token'] ?? ''));
             $twilioPhone = trim((string) ($_POST['twilio_phone_number'] ?? ''));
+            $fcmServerKey = trim((string) ($_POST['fcm_server_key'] ?? ''));
+            $fcmSenderId = trim((string) ($_POST['fcm_sender_id'] ?? ''));
             $openaiKey = trim((string) ($_POST['openai_api_key'] ?? ''));
             $stripeKey = trim((string) ($_POST['stripe_secret_key'] ?? ''));
             $stripePubKey = trim((string) ($_POST['stripe_publishable_key'] ?? ''));
@@ -45,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'TWILIO_ACCOUNT_SID' => $twilioSid,
                 'TWILIO_AUTH_TOKEN' => $twilioToken,
                 'TWILIO_PHONE_NUMBER' => $twilioPhone,
+                'FCM_SERVER_KEY' => $fcmServerKey,
+                'FCM_SENDER_ID' => $fcmSenderId,
                 'OPENAI_API_KEY' => $openaiKey,
                 'STRIPE_SECRET_KEY' => $stripeKey,
                 'STRIPE_PUBLISHABLE_KEY' => $stripePubKey,
@@ -98,6 +102,8 @@ $googleMapsKey = $envValues['GOOGLE_MAPS_API_KEY'] ?? '';
 $twilioSid = $envValues['TWILIO_ACCOUNT_SID'] ?? '';
 $twilioToken = $envValues['TWILIO_AUTH_TOKEN'] ?? '';
 $twilioPhone = $envValues['TWILIO_PHONE_NUMBER'] ?? '';
+$fcmServerKey = $envValues['FCM_SERVER_KEY'] ?? '';
+$fcmSenderId = $envValues['FCM_SENDER_ID'] ?? '';
 $openaiKey = $envValues['OPENAI_API_KEY'] ?? '';
 $stripeKey = $envValues['STRIPE_SECRET_KEY'] ?? '';
 $stripePubKey = $envValues['STRIPE_PUBLISHABLE_KEY'] ?? '';
@@ -242,6 +248,29 @@ require __DIR__ . '/../includes/header.php';
                  value="<?= htmlspecialchars($twilioPhone, ENT_QUOTES, 'UTF-8') ?>"
                  class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm"
                  placeholder="+1234567890">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-bell text-red-600"></i>
+        Notifications Push (Firebase Cloud Messaging)
+      </h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Server Key</label>
+          <input type="password" name="fcm_server_key" 
+                 value="<?= htmlspecialchars($fcmServerKey, ENT_QUOTES, 'UTF-8') ?>"
+                 class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm"
+                 placeholder="AAAA...">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Sender ID</label>
+          <input type="text" name="fcm_sender_id" 
+                 value="<?= htmlspecialchars($fcmSenderId, ENT_QUOTES, 'UTF-8') ?>"
+                 class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm"
+                 placeholder="123456789012">
         </div>
       </div>
     </div>

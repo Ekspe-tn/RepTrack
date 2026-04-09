@@ -18,13 +18,23 @@ $form = [
 $selectedProducts = [];
 $qtyMap = [];
 
+$userId = current_user()['id'] ?? null;
+
 try {
-    $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    if (current_user()['role'] === 'rep') {
+        $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
+            FROM governorates g
+            JOIN users u ON (FIND_IN_SET(g.id, u.governorates) > 0 OR FIND_IN_SET(g.name_fr, u.governorates) > 0)
+            WHERE u.id = ?
+            ORDER BY g.name_fr');
+        $stmt->execute([$userId]);
+        $governorates = $stmt->fetchAll();
+    } else {
+        $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
+    }
 } catch (Throwable $e) {
     $governorates = [];
 }
-
-$userId = current_user()['id'] ?? null;
 
 try {
     $stmt = db()->prepare('SELECT p.id, p.name, s.quantity FROM stock s JOIN products p ON p.id = s.product_id WHERE s.user_id = ? AND s.quantity > 0 AND p.active = 1 ORDER BY p.name');
