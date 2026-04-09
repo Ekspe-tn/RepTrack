@@ -82,9 +82,13 @@ require __DIR__ . '/../includes/header.php';
 
   <div class="bg-white rounded-2xl shadow-sm p-4">
     <div class="text-sm font-semibold text-slate-900">Actions rapides</div>
-    <div class="mt-3 flex gap-2">
+    <div class="mt-3 flex gap-2 flex-wrap">
       <a href="/visits/new" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm">Nouvelle visite</a>
       <a href="/visits" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm">Voir visites</a>
+      <a href="/itinerary" class="px-4 py-2 rounded-xl bg-green-600 text-white text-sm flex items-center gap-2">
+        <i class="fas fa-route"></i>
+        <span>Planificateur d'itineraire</span>
+      </a>
 
     <?php if ($role === 'admin'): ?>
       <a href="/delegues" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm">Gestion delegues</a>
