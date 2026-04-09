@@ -318,61 +318,98 @@ $page_title = 'Delegues';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="space-y-4">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="space-y-6">
+  <!-- Header with Action Buttons -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Delegues</h1>
+      <p class="text-sm text-slate-500 mt-1">Gerer vos delegues et leurs performances</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="/delegues/new" class="h-10 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center gap-2 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm">
+        <i class="fas fa-user-plus"></i>
+        <span>Creer un delegue</span>
+      </a>
+      <a href="/delegues/map" class="h-10 px-4 rounded-xl bg-green-600 text-white text-sm font-semibold flex items-center gap-2 hover:bg-green-700 active:scale-[0.98] transition-all shadow-sm">
+        <i class="fas fa-map-marked-alt"></i>
+        <span>Carte des zones</span>
+      </a>
+      <a href="/delegues?export=csv&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>" class="h-10 px-4 rounded-xl border-2 border-slate-200 text-sm text-slate-700 font-semibold flex items-center gap-2 hover:bg-slate-50 hover:border-blue-300 active:scale-[0.98] transition-all">
+        <i class="fas fa-file-csv"></i>
+        <span>Exporter KPI CSV</span>
+      </a>
+    </div>
+  </div>
+
   <?php if ($success !== ''): ?>
-    <div class="p-3 rounded-xl bg-green-50 text-green-700 text-sm">
-      <?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?>
+    <div class="bg-green-50 border border-green-200 text-green-700 rounded-2xl p-4 text-sm flex items-center gap-3 shadow-sm">
+      <i class="fas fa-check-circle text-xl"></i>
+      <span><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></span>
     </div>
   <?php endif; ?>
+
   <?php if ($error !== ''): ?>
-    <div class="p-3 rounded-xl bg-red-50 text-red-700 text-sm">
-      <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+    <div class="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 text-sm flex items-center gap-3 shadow-sm">
+      <i class="fas fa-exclamation-circle text-xl"></i>
+      <span><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span>
     </div>
   <?php endif; ?>
 
   <!-- KPIs Section -->
-  <div class="bg-white rounded-2xl shadow-sm p-4">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-base font-semibold text-slate-900">KPIs delegues (30 derniers jours)</h2>
-      <div class="flex gap-2">
-        <a href="/delegues/new" class="text-xs text-blue-600">Creer un delegue</a>
-        <a href="/delegues/map" class="text-xs text-blue-600">Carte des zones</a>
-        <a href="/delegues?export=csv&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>" class="text-xs text-blue-600">Exporter KPI CSV</a>
-      </div>
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-900">Statistiques (30 derniers jours)</h2>
     </div>
     
-    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div>
-        <label class="block text-xs text-slate-500">Du</label>
-        <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+    <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 border border-blue-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm text-blue-700 font-medium">Delegues actifs</div>
+            <div class="text-3xl font-bold text-blue-900 mt-2"><?= (int) $summary['active'] ?> / <?= (int) $summary['total'] ?></div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-md">
+            <i class="fas fa-users text-white text-xl"></i>
+          </div>
+        </div>
       </div>
-      <div>
-        <label class="block text-xs text-slate-500">Au</label>
-        <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+      
+      <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 border border-green-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm text-green-700 font-medium">Visites (30j)</div>
+            <div class="text-3xl font-bold text-green-900 mt-2"><?= (int) $summary['visits_30d'] ?></div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-green-600 flex items-center justify-center shadow-md">
+            <i class="fas fa-route text-white text-xl"></i>
+          </div>
+        </div>
       </div>
-      <div class="md:col-span-2">
-        <button type="submit" class="h-10 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
-          Appliquer
-        </button>
+      
+      <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 border border-purple-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm text-purple-700 font-medium">Echantillons (30j)</div>
+            <div class="text-3xl font-bold text-purple-900 mt-2"><?= (int) $summary['samples_30d'] ?></div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-md">
+            <i class="fas fa-gift text-white text-xl"></i>
+          </div>
+        </div>
       </div>
-    </form>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Delegues actifs</div>
-        <div class="text-2xl font-bold text-slate-900"><?= (int) $summary['active'] ?> / <?= (int) $summary['total'] ?></div>
-      </div>
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Visites (30j)</div>
-        <div class="text-2xl font-bold text-blue-600"><?= (int) $summary['visits_30d'] ?></div>
-      </div>
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Echantillons (30j)</div>
-        <div class="text-2xl font-bold text-green-600"><?= (int) $summary['samples_30d'] ?></div>
-      </div>
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Delegues inactifs</div>
-        <div class="text-2xl font-bold text-red-600"><?= (int) $summary['total'] - (int) $summary['active'] ?></div>
+      
+      <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-5 border border-red-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm text-red-700 font-medium">Delegues inactifs</div>
+            <div class="text-3xl font-bold text-red-900 mt-2"><?= (int) $summary['total'] - (int) $summary['active'] ?></div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center shadow-md">
+            <i class="fas fa-user-slash text-white text-xl"></i>
+          </div>
+        </div>
       </div>
     </div>
   </div>
