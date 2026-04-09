@@ -32,7 +32,7 @@ $app_env = getenv('APP_ENV') ?: 'local';
           <span class="text-slate-600">&larr;</span>
         </a>
       <?php else: ?>
-        <span class="text-blue-600 font-black text-lg">RT</span>
+        <a href="/dashboard" class="text-blue-600 font-black text-lg">RepTrack</a>
       <?php endif; ?>
     </div>
 

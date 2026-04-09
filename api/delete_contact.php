@@ -61,5 +61,5 @@ try {
     
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to delete contact']);
+    echo json_encode(['success' => false, 'error' => 'Failed to delete contact: ' . $e->getMessage()]);
 }
