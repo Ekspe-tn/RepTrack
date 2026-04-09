@@ -39,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Handle photo upload
                 $photoPath = null;
                 if (!empty($_FILES['photo']['name'])) {
-                    $uploadDir = dirname(__DIR__) . '/public/uploads/products/';
+                    $uploadDir = __DIR__ . '/../public/uploads/products/';
                     if (!is_dir($uploadDir)) {
-                        if (!mkdir($uploadDir, 0755, true)) {
+                        if (!mkdir($uploadDir, 0777, true)) {
                             throw new RuntimeException('Impossible de creer le repertoire de telechargement.');
                         }
                     }
