@@ -76,7 +76,7 @@ if ($search !== '') {
 $whereSql = $conditions ? ('WHERE ' . implode(' AND ', $conditions)) : '';
 
 try {
-    $stmt = db()->prepare("SELECT c.id, c.name, c.type, c.phone, c.active, c.potential, c.assigned_rep_id, u.name AS rep_name, g.name_fr AS governorate_name, ci.name_fr AS city_name
+    $stmt = db()->prepare("SELECT c.id, c.name, c.type, c.phone, c.active, c.potential, c.assigned_rep_id, c.latitude, c.longitude, u.name AS rep_name, g.name_fr AS governorate_name, ci.name_fr AS city_name
         FROM contacts c
         LEFT JOIN users u ON u.id = c.assigned_rep_id
         JOIN governorates g ON g.id = c.governorate_id
@@ -221,10 +221,17 @@ require __DIR__ . '/../includes/header.php';
                     </div>
                   </td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
-                      <?= (int) $contact['active'] === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                      <?= (int) $contact['active'] === 1 ? 'Actif' : 'Inactif' ?>
-                    </span>
+                    <div class="flex flex-col gap-1">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                        <?= (int) $contact['active'] === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                        <?= (int) $contact['active'] === 1 ? 'Actif' : 'Inactif' ?>
+                      </span>
+                      <?php if (!empty($contact['latitude']) && !empty($contact['longitude'])): ?>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-location-dot mr-1 text-xs"></i>GPS OK
+                      </span>
+                      <?php endif; ?>
+                    </div>
                   </td>
                   <td class="px-4 py-3 text-right">
                     <div class="flex items-center justify-end gap-2">
