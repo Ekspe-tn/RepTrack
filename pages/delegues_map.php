@@ -87,6 +87,19 @@ try {
     $reps = [];
 }
 
+// Fetch contacts data for counting (only assigned contacts like delegues page)
+try {
+    $contacts = db()->query("SELECT c.id, c.type, c.latitude, c.longitude, c.city_id, c.assigned_rep_id, 
+        ci.name_fr AS city_name, ci.governorate_id
+        FROM contacts c
+        LEFT JOIN cities ci ON ci.id = c.city_id
+        WHERE c.assigned_rep_id IS NOT NULL 
+        AND c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+        ORDER BY c.id")->fetchAll();
+} catch (Throwable $e) {
+    $contacts = [];
+}
+
 // Fetch all governorates
 try {
     $allGovernorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
@@ -101,16 +114,19 @@ $colors = [
     '#f43f5e', '#a855f7', '#10b981', '#eab308', '#0ea5e9'
 ];
 
-$governorateColors = [];
-foreach ($allGovernorates as $index => $gov) {
-    $governorateColors[(int) $gov['id']] = $colors[$index % count($colors)];
+// Create governorate name to ID map for GeoJSON color matching
+$govNameToIdMap = [];
+foreach ($allGovernorates as $gov) {
+    $govName = (string) $gov['name_fr'];
+    $govNameToIdMap[strtoupper($govName)] = (int) $gov['id'];
 }
 
 // Process delegue data
 $repData = [];
 $governorateStats = [];
+$governorateColorsMap = [];
 
-foreach ($reps as $rep) {
+foreach ($reps as $index => $rep) {
     $govId = (int) $rep['governorate_id'];
     $govName = (string) ($rep['governorate_name'] ?? '');
     
@@ -137,6 +153,16 @@ foreach ($reps as $rep) {
         }
     }
     
+    // Assign unique color to this delegate
+    $repColor = $colors[$index % count($colors)];
+    
+    // Map governorate colors (first governorate gets rep's color)
+    foreach ($governorateIds as $gid) {
+        if (!isset($governorateColorsMap[$gid])) {
+            $governorateColorsMap[$gid] = $repColor;
+        }
+    }
+    
     // Parse excluded cities
     $excludedIds = [];
     if (!empty($rep['excluded_city_ids'])) {
@@ -146,7 +172,50 @@ foreach ($reps as $rep) {
         }
     }
     
-// Build points more efficiently - fetch all cities at once
+    // Count contacts in this delegate's zone by governorate and type
+    $contactCounts = [];
+    $contactPoints = [];
+    
+    foreach ($contacts as $contact) {
+        $contactRepId = (int) ($contact['assigned_rep_id'] ?? 0);
+        
+        // Check if contact is assigned to this delegate (matches delegues page logic)
+        if ($contactRepId !== (int) $rep['id']) {
+            continue;
+        }
+        
+        $contactGovId = (int) ($contact['governorate_id'] ?? 0);
+        $contactCityId = (int) ($contact['city_id'] ?? 0);
+        
+        // Check if contact is in delegate's governorates
+        if (!in_array($contactGovId, $governorateIds)) {
+            continue;
+        }
+        
+        // Check if contact is in excluded cities
+        if (in_array($contactCityId, $excludedIds, true)) {
+            continue;
+        }
+        
+        // Count by type
+        $type = (string) ($contact['type'] ?? 'autre');
+        if (!isset($contactCounts[$type])) {
+            $contactCounts[$type] = 0;
+        }
+        $contactCounts[$type]++;
+        
+        // Add contact point
+        if (isset($contact['latitude']) && isset($contact['longitude'])) {
+            $contactPoints[] = [
+                'name' => $contact['id'],
+                'lat' => (float) $contact['latitude'],
+                'lng' => (float) $contact['longitude'],
+                'type' => $type,
+            ];
+        }
+    }
+    
+    // Build points more efficiently - fetch all cities at once
     $points = [];
     if (!empty($governorateIds)) {
         $placeholders = str_repeat('?,', count($governorateIds));
@@ -199,10 +268,13 @@ foreach ($reps as $rep) {
         'governorate_name' => implode(', ', $govNames),
         'governorate_ids' => $governorateIds,
         'active' => (int) $rep['active'] === 1,
-        'color' => $colors[array_key_first($repData) % count($colors)],
+        'color' => $repColor,
         'excluded_count' => count($excludedIds),
         'points_count' => count($points),
+        'contacts_count' => array_sum($contactCounts),
+        'contact_counts' => $contactCounts,
         'points' => $points,
+        'contact_points' => $contactPoints,
     ];
     
     // Track governorate coverage
@@ -211,19 +283,29 @@ foreach ($reps as $rep) {
             $governorateStats[$gid] = [
                 'name' => '',
                 'reps' => [],
+                'contacts' => [],
                 'points' => [],
             ];
         }
         $governorateStats[$gid]['reps'][] = (string) $rep['name'];
         $governorateStats[$gid]['points'] = array_merge($governorateStats[$gid]['points'], $points);
+        
+        // Add contacts to governorate stats
+        foreach ($contactCounts as $type => $count) {
+            if (!isset($governorateStats[$gid]['contacts'][$type])) {
+                $governorateStats[$gid]['contacts'][$type] = 0;
+            }
+            $governorateStats[$gid]['contacts'][$type] += $count;
+        }
     }
 }
 
 // Calculate summary stats
+$totalContacts = array_sum(array_map(fn($r) => $r['contacts_count'], $repData));
 $summary = [
     'total_reps' => count($repData),
     'active_reps' => count(array_filter($repData, fn($r) => $r['active'])),
-    'total_points' => array_sum(array_map(fn($r) => $r['points_count'], $repData)),
+    'total_contacts' => $totalContacts,
     'governorates_covered' => count(array_unique(array_merge(...array_map(fn($r) => $r['governorate_ids'], $repData)))),
 ];
 
@@ -267,8 +349,8 @@ require __DIR__ . '/../includes/header.php';
         <div class="text-2xl font-bold text-green-600"><?= $summary['active_reps'] ?></div>
       </div>
       <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Total delegations</div>
-        <div class="text-2xl font-bold text-blue-600"><?= $summary['total_points'] ?></div>
+        <div class="text-xs text-slate-500">Total contacts</div>
+        <div class="text-2xl font-bold text-blue-600"><?= $summary['total_contacts'] ?></div>
       </div>
       <div class="rounded-xl border border-slate-100 p-4">
         <div class="text-xs text-slate-500">Gouvernorats couverts</div>
@@ -329,6 +411,7 @@ require __DIR__ . '/../includes/header.php';
   (function () {
     var repData = <?= json_encode($repData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     var geojsonData = <?= json_encode($geojsonData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    var governorateColors = <?= json_encode($governorateColorsMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     
     // Initialize map
     var map = L.map('delegues-map').setView([34.0, 9.0], 6.5);
@@ -340,11 +423,17 @@ require __DIR__ . '/../includes/header.php';
     // Add governorate boundaries from GeoJSON if available
     if (geojsonData) {
       L.geoJSON(geojsonData, {
-        style: {
-          color: '#94a3b8',
-          weight: 2,
-          fillColor: '#e2e8f0',
-          fillOpacity: 0.3
+        style: function(feature) {
+          var govName = feature.properties && feature.properties.name ? feature.properties.name : '';
+          var govKey = govName.replace(/[^A-Z0-9]/g, '').toUpperCase();
+          var color = governorateColors[govKey] || '#94a3b8';
+          
+          return {
+            color: color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.3
+          };
         },
         onEachFeature: function(feature, layer) {
           if (feature.properties && feature.properties.name) {
@@ -370,9 +459,31 @@ require __DIR__ . '/../includes/header.php';
     // Add markers for each delegue
     repData.forEach(function(rep) {
       var markers = [];
+      
+      // Add city points (delegations)
       (rep.points || []).forEach(function(point) {
         var marker = L.circleMarker([point.lat, point.lng], {
-          radius: 6,
+          radius: 4,
+          color: rep.color,
+          fillColor: '#ffffff',
+          fillOpacity: 0.9,
+          weight: 1
+        });
+        
+        var popupContent = '<div class="text-sm">' +
+          '<strong class="text-slate-900">' + rep.name + '</strong><br>' +
+          '<span class="text-slate-600">Délégation: ' + point.name + '</span><br>' +
+          '<span class="text-xs text-slate-500">' + rep.governorate_name + '</span>' +
+          '</div>';
+        
+        marker.bindPopup(popupContent);
+        markers.push(marker);
+      });
+      
+      // Add contact markers
+      (rep.contact_points || []).forEach(function(point) {
+        var marker = L.circleMarker([point.lat, point.lng], {
+          radius: 8,
           color: rep.color,
           fillColor: rep.color,
           fillOpacity: 0.85,
@@ -381,8 +492,8 @@ require __DIR__ . '/../includes/header.php';
         
         var popupContent = '<div class="text-sm">' +
           '<strong class="text-slate-900">' + rep.name + '</strong><br>' +
-          '<span class="text-slate-600">' + point.name + '</span><br>' +
-          '<span class="text-xs text-slate-500">' + rep.governorate_name + '</span>' +
+          '<span class="text-slate-600">Contact #' + point.name + '</span><br>' +
+          '<span class="text-xs text-slate-500">Type: ' + point.type + '</span>' +
           '</div>';
         
         marker.bindPopup(popupContent);
@@ -393,7 +504,6 @@ require __DIR__ . '/../includes/header.php';
         });
         
         markers.push(marker);
-        markerClusterGroup.addLayer(marker);
       });
       
       repMarkers[rep.id] = markers;
@@ -406,6 +516,13 @@ require __DIR__ . '/../includes/header.php';
       repLayers[rep.id] = group;
     });
 
+    // Add all markers to cluster
+    Object.values(repMarkers).forEach(function(markers) {
+      markers.forEach(function(m) {
+        markerClusterGroup.addLayer(m);
+      });
+    });
+
     // Show delegue details panel
     function showDelegueDetails(rep) {
       var container = document.getElementById('delegue-details');
@@ -415,6 +532,22 @@ require __DIR__ . '/../includes/header.php';
       
       var statusClass = rep.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
       var statusText = rep.active ? 'Actif' : 'Inactif';
+      
+      // Format contact counts
+      var contactInfo = '';
+      if (rep.contact_counts) {
+        var types = Object.keys(rep.contact_counts).sort();
+        var typeLabels = types.map(function(t) {
+          return t.charAt(0).toUpperCase() + t.slice(1);
+        });
+        var counts = types.map(function(t) {
+          return t + ': ' + rep.contact_counts[t];
+        }).join(', ');
+        contactInfo = '<div class="rounded-lg bg-slate-50 p-3">' +
+          '<div class="text-xs text-slate-500">Contacts</div>' +
+          '<div class="text-sm font-medium text-slate-900">' + counts + '</div>' +
+          '</div>';
+      }
       
       content.innerHTML = 
         '<div class="flex items-center justify-between">' +
@@ -432,10 +565,11 @@ require __DIR__ . '/../includes/header.php';
             '<div class="text-sm font-medium text-slate-900">' + rep.governorate_name + '</div>' +
           '</div>' +
           '<div class="rounded-lg bg-slate-50 p-3">' +
-            '<div class="text-xs text-slate-500">Delegations</div>' +
-            '<div class="text-sm font-medium text-slate-900">' + rep.points_count + '</div>' +
+            '<div class="text-xs text-slate-500">Total contacts</div>' +
+            '<div class="text-sm font-medium text-slate-900">' + rep.contacts_count + '</div>' +
           '</div>' +
         '</div>' +
+        contactInfo +
         '<div class="flex gap-2 mt-3">' +
           '<a href="/delegues" class="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-center leading-9 hover:bg-slate-50">Voir liste</a>' +
           '<a href="/visits?rep_id=' + rep.id + '" class="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-center leading-9 hover:bg-slate-50">Voir visites</a>' +
@@ -461,7 +595,7 @@ require __DIR__ . '/../includes/header.php';
           '<span class="inline-block w-3 h-3 rounded-full" style="background:' + rep.color + '"></span>' +
           '<div class="flex flex-col">' +
             '<span class="font-medium text-slate-900">' + rep.name + '</span>' +
-            '<span class="text-slate-500">' + rep.governorate_name + ' (' + rep.points_count + ' delegations)</span>' +
+            '<span class="text-slate-500">' + rep.governorate_name + ' (' + rep.contacts_count + ' contacts)</span>' +
           '</div>';
         item.addEventListener('click', function() {
           showDelegueDetails(rep);
