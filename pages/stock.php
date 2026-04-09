@@ -111,6 +111,13 @@ foreach ($stock as $item) {
     }
 }
 
+// Calculate total samples distributed from the beginning
+try {
+    $totalSamplesDistributed = (int) db()->query('SELECT SUM(quantity) FROM stock_movements WHERE movement_type = "add"')->fetchColumn();
+} catch (Throwable $e) {
+    $totalSamplesDistributed = 0;
+}
+
 // Fetch delegates for assignment
 try {
     $reps = db()->query("SELECT id, name FROM users WHERE role = 'rep' AND active = 1 ORDER BY name")->fetchAll();
@@ -206,6 +213,19 @@ require __DIR__ . '/../includes/header.php';
         <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
           <i class="fas fa-check-double text-emerald-600 text-xl"></i>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Samples Distributed Card -->
+  <div class="bg-white rounded-2xl shadow-sm p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm text-slate-500">Echantillons Distribues (depuis le debut)</div>
+        <div class="text-2xl font-bold text-blue-600 mt-1"><?= number_format($totalSamplesDistributed) ?></div>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+        <i class="fas fa-hand-holding text-blue-600 text-xl"></i>
       </div>
     </div>
   </div>
