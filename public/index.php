@@ -123,6 +123,10 @@ switch ($path) {
         require_role('admin');
         require $basePath . '/pages/delegues_map.php';
         break;
+    case '/delegues/map/debug':
+        require_role('admin');
+        require $basePath . '/pages/delegues_map_debug.php';
+        break;
     default:
         http_response_code(404);
         require $basePath . '/pages/404.php';
