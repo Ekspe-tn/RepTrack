@@ -27,6 +27,10 @@ $isAdmin = $role === 'admin';
       <span class="text-lg">&#x1F9D1;&#x200D;&#x1F4BC;</span>
       <span>Delegues</span>
     </a>
+    <a href="/admin" class="flex flex-col items-center gap-1">
+      <span class="text-lg">&#x2699;&#xFE0F;</span>
+      <span>Admin</span>
+    </a>
     <?php endif; ?>
     <a href="/stock" class="flex flex-col items-center gap-1">
       <span class="text-lg">&#x1F4E6;</span>
