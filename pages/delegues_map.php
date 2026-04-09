@@ -87,14 +87,13 @@ try {
     $reps = [];
 }
 
-// Fetch contacts data for counting (only assigned contacts like delegues page)
+// Fetch contacts data for counting (all contacts)
 try {
-    $contacts = db()->query("SELECT c.id, c.type, c.latitude, c.longitude, c.city_id, c.assigned_rep_id, 
-        ci.name_fr AS city_name, ci.governorate_id
+    $contacts = db()->query("SELECT c.id, c.type, c.latitude, c.longitude, c.city_id, c.governorate_id, c.assigned_rep_id,
+        ci.name_fr AS city_name, g.name_fr AS governorate_name
         FROM contacts c
         LEFT JOIN cities ci ON ci.id = c.city_id
-        WHERE c.assigned_rep_id IS NOT NULL 
-        AND c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+        LEFT JOIN governorates g ON g.id = c.governorate_id
         ORDER BY c.id")->fetchAll();
 } catch (Throwable $e) {
     $contacts = [];
@@ -107,6 +106,12 @@ try {
     $allGovernorates = [];
 }
 
+// Governorate ID to name map
+$govIdToName = [];
+foreach ($allGovernorates as $g) {
+    $govIdToName[(int) $g['id']] = (string) $g['name_fr'];
+}
+
 // Build governorate colors
 $colors = [
     '#3b82f6', '#22c55e', '#f97316', '#8b5cf6', '#06b6d4',
@@ -114,17 +119,15 @@ $colors = [
     '#f43f5e', '#a855f7', '#10b981', '#eab308', '#0ea5e9'
 ];
 
-// Create governorate name to ID map for GeoJSON color matching
-$govNameToIdMap = [];
-foreach ($allGovernorates as $gov) {
-    $govName = (string) $gov['name_fr'];
-    $govNameToIdMap[strtoupper($govName)] = (int) $gov['id'];
-}
-
 // Process delegue data
 $repData = [];
 $governorateStats = [];
 $governorateColorsMap = [];
+$govContactSummary = [];
+$delegationSummary = [];
+$missingGpsByRep = [];
+$missingGpsUnassigned = 0;
+$unassignedPoints = [];
 
 foreach ($reps as $index => $rep) {
     $govId = (int) $rep['governorate_id'];
@@ -145,11 +148,8 @@ foreach ($reps as $index => $rep) {
     // Get governorate names
     $govNames = [];
     foreach ($governorateIds as $gid) {
-        foreach ($allGovernorates as $g) {
-            if ((int) $g['id'] === $gid) {
-                $govNames[] = $g['name_fr'];
-                break;
-            }
+        if (isset($govIdToName[$gid])) {
+            $govNames[] = $govIdToName[$gid];
         }
     }
     
@@ -178,25 +178,46 @@ foreach ($reps as $index => $rep) {
     
     foreach ($contacts as $contact) {
         $contactRepId = (int) ($contact['assigned_rep_id'] ?? 0);
-        
-        // Check if contact is assigned to this delegate (matches delegues page logic)
         if ($contactRepId !== (int) $rep['id']) {
             continue;
         }
-        
+
         $contactGovId = (int) ($contact['governorate_id'] ?? 0);
         $contactCityId = (int) ($contact['city_id'] ?? 0);
-        
-        // Check if contact is in delegate's governorates
-        if (!in_array($contactGovId, $governorateIds)) {
-            continue;
+        $contactCityName = (string) ($contact['city_name'] ?? '');
+        $contactGovName = (string) ($contact['governorate_name'] ?? ($govIdToName[$contactGovId] ?? ''));
+
+        if (!isset($govContactSummary[$contactGovId])) {
+            $govContactSummary[$contactGovId] = [
+                'id' => $contactGovId,
+                'name' => $contactGovName,
+                'count' => 0,
+                'color_counts' => [],
+            ];
         }
-        
-        // Check if contact is in excluded cities
-        if (in_array($contactCityId, $excludedIds, true)) {
-            continue;
+        $govContactSummary[$contactGovId]['count']++;
+        if (!isset($govContactSummary[$contactGovId]['color_counts'][$repColor])) {
+            $govContactSummary[$contactGovId]['color_counts'][$repColor] = 0;
         }
-        
+        $govContactSummary[$contactGovId]['color_counts'][$repColor]++;
+
+        $delegationKey = $contactGovId . ':' . $contactCityId;
+        if (!isset($delegationSummary[$delegationKey])) {
+            $delegationSummary[$delegationKey] = [
+                'gov_id' => $contactGovId,
+                'gov_name' => $contactGovName,
+                'city_id' => $contactCityId,
+                'city_name' => $contactCityName,
+                'count' => 0,
+                'color_counts' => [],
+            ];
+        }
+        $delegationSummary[$delegationKey]['count']++;
+        if (!isset($delegationSummary[$delegationKey]['color_counts'][$repColor])) {
+            $delegationSummary[$delegationKey]['color_counts'][$repColor] = 0;
+        }
+        $delegationSummary[$delegationKey]['color_counts'][$repColor]++;
+
         // Count by type
         $type = (string) ($contact['type'] ?? 'autre');
         if (!isset($contactCounts[$type])) {
@@ -211,7 +232,16 @@ foreach ($reps as $index => $rep) {
                 'lat' => (float) $contact['latitude'],
                 'lng' => (float) $contact['longitude'],
                 'type' => $type,
+                'city' => $contactCityName,
+                'gov' => $contactGovName,
+                'gov_id' => $contactGovId,
+                'city_id' => $contactCityId,
             ];
+        } else {
+            if (!isset($missingGpsByRep[$rep['id']])) {
+                $missingGpsByRep[$rep['id']] = 0;
+            }
+            $missingGpsByRep[$rep['id']]++;
         }
     }
     
@@ -225,12 +255,6 @@ foreach ($reps as $index => $rep) {
             $stmt = db()->prepare("SELECT id, name_fr, governorate_id FROM cities WHERE governorate_id IN ($placeholders)");
             $stmt->execute($governorateIds);
             $cities = $stmt->fetchAll();
-            
-            // Create a governorate ID to name map
-            $govIdToName = [];
-            foreach ($allGovernorates as $g) {
-                $govIdToName[(int) $g['id']] = (string) $g['name_fr'];
-            }
             
             foreach ($cities as $city) {
                 $cityId = (int) $city['id'];
@@ -275,6 +299,7 @@ foreach ($reps as $index => $rep) {
         'contact_counts' => $contactCounts,
         'points' => $points,
         'contact_points' => $contactPoints,
+        'missing_gps' => (int) ($missingGpsByRep[$rep['id']] ?? 0),
     ];
     
     // Track governorate coverage
@@ -300,13 +325,74 @@ foreach ($reps as $index => $rep) {
     }
 }
 
+// Collect unassigned contacts with GPS for map display
+foreach ($contacts as $contact) {
+    $contactRepId = (int) ($contact['assigned_rep_id'] ?? 0);
+    if ($contactRepId !== 0) {
+        continue;
+    }
+
+    if (!isset($contact['latitude']) || !isset($contact['longitude'])) {
+        $missingGpsUnassigned++;
+        continue;
+    }
+
+    $unassignedPoints[] = [
+        'name' => $contact['id'],
+        'lat' => (float) $contact['latitude'],
+        'lng' => (float) $contact['longitude'],
+        'type' => (string) ($contact['type'] ?? 'autre'),
+        'city' => (string) ($contact['city_name'] ?? ''),
+        'gov' => (string) ($contact['governorate_name'] ?? ''),
+        'gov_id' => (int) ($contact['governorate_id'] ?? 0),
+    ];
+}
+
+// Resolve dominant color per governorate and delegation
+$govCards = array_values($govContactSummary);
+foreach ($govCards as &$govRow) {
+    $colorCounts = $govRow['color_counts'] ?? [];
+    arsort($colorCounts);
+    $govRow['color'] = $colorCounts ? array_key_first($colorCounts) : '#94a3b8';
+    unset($govRow['color_counts']);
+}
+unset($govRow);
+
+$delegationCards = array_values($delegationSummary);
+foreach ($delegationCards as &$cityRow) {
+    $colorCounts = $cityRow['color_counts'] ?? [];
+    arsort($colorCounts);
+    $cityRow['color'] = $colorCounts ? array_key_first($colorCounts) : '#94a3b8';
+    unset($cityRow['color_counts']);
+}
+unset($cityRow);
+
+usort($govCards, fn($a, $b) => ($b['count'] <=> $a['count']) ?: strcmp($a['name'], $b['name']));
+usort($delegationCards, fn($a, $b) => ($b['count'] <=> $a['count']) ?: strcmp($a['city_name'], $b['city_name']));
+
+// Map governorate name keys to colors for GeoJSON fill
+$governorateColorKeys = [];
+foreach ($governorateColorsMap as $gid => $color) {
+    $name = $govIdToName[(int) $gid] ?? '';
+    if ($name === '') {
+        continue;
+    }
+    $govKey = preg_replace('/[^A-Z0-9]/', '', strtoupper($name));
+    if (!isset($governorateColorKeys[$govKey])) {
+        $governorateColorKeys[$govKey] = $color;
+    }
+}
+
 // Calculate summary stats
 $totalContacts = array_sum(array_map(fn($r) => $r['contacts_count'], $repData));
+$totalMissingGps = array_sum(array_map(fn($r) => (int) ($r['missing_gps'] ?? 0), $repData)) + $missingGpsUnassigned;
 $summary = [
     'total_reps' => count($repData),
     'active_reps' => count(array_filter($repData, fn($r) => $r['active'])),
     'total_contacts' => $totalContacts,
-    'governorates_covered' => count(array_unique(array_merge(...array_map(fn($r) => $r['governorate_ids'], $repData)))),
+    'governorates_covered' => count($govCards),
+    'delegations_covered' => count($delegationCards),
+    'missing_gps' => $totalMissingGps,
 ];
 
 $page_title = 'Carte des zones';
@@ -329,7 +415,7 @@ require __DIR__ . '/../includes/header.php';
     </div>
   <?php endif; ?>
 
-  <!-- Summary Stats -->
+  <!-- Summary -->
   <div class="bg-white rounded-2xl shadow-sm p-4">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-base font-semibold text-slate-900">Carte des zones</h2>
@@ -338,25 +424,87 @@ require __DIR__ . '/../includes/header.php';
         <a href="/delegues/new" class="text-xs text-blue-600 hover:text-blue-800">Creer un delegue</a>
       </div>
     </div>
-    
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Total delegues</div>
-        <div class="text-2xl font-bold text-slate-900"><?= $summary['total_reps'] ?></div>
-      </div>
-      <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Delegues actifs</div>
-        <div class="text-2xl font-bold text-green-600"><?= $summary['active_reps'] ?></div>
-      </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
       <div class="rounded-xl border border-slate-100 p-4">
         <div class="text-xs text-slate-500">Total contacts</div>
         <div class="text-2xl font-bold text-blue-600"><?= $summary['total_contacts'] ?></div>
       </div>
       <div class="rounded-xl border border-slate-100 p-4">
-        <div class="text-xs text-slate-500">Gouvernorats couverts</div>
-        <div class="text-2xl font-bold text-purple-600"><?= $summary['governorates_covered'] ?></div>
+        <div class="text-xs text-slate-500">Gouvernorats</div>
+        <div class="text-2xl font-bold text-slate-900"><?= $summary['governorates_covered'] ?></div>
+      </div>
+      <div class="rounded-xl border border-slate-100 p-4">
+        <div class="text-xs text-slate-500">Delegations</div>
+        <div class="text-2xl font-bold text-slate-900"><?= $summary['delegations_covered'] ?></div>
+      </div>
+      <div class="rounded-xl border border-slate-100 p-4">
+        <div class="text-xs text-slate-500">Contacts / delegue</div>
+        <div class="text-2xl font-bold text-slate-900">
+          <?= $summary['total_reps'] > 0 ? number_format($summary['total_contacts'] / $summary['total_reps'], 1) : '0' ?>
+        </div>
+      </div>
+      <div class="rounded-xl border border-slate-100 p-4">
+        <div class="text-xs text-slate-500">Contacts sans GPS</div>
+        <div class="text-2xl font-bold text-amber-600"><?= (int) $summary['missing_gps'] ?></div>
       </div>
     </div>
+  </div>
+
+  <!-- Contacts by Governorate -->
+  <div class="bg-white rounded-2xl shadow-sm p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-slate-900">Contacts par gouvernorat</h3>
+      <div class="text-xs text-slate-500">Cliquez pour filtrer</div>
+    </div>
+    <?php if (empty($govCards)): ?>
+      <div class="text-sm text-slate-500">Aucun contact avec coordonnees.</div>
+    <?php else: ?>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <?php foreach ($govCards as $gov): ?>
+          <button type="button"
+                  class="text-left rounded-xl border px-4 py-3 hover:bg-slate-50 transition-colors"
+                  style="border-color: <?= htmlspecialchars($gov['color'], ENT_QUOTES, 'UTF-8') ?>;"
+                  data-filter-gov="<?= (int) $gov['id'] ?>">
+            <div class="text-xs text-slate-500">Gouvernorat</div>
+            <div class="text-sm font-semibold text-slate-900"><?= htmlspecialchars($gov['name'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="text-lg font-bold" style="color: <?= htmlspecialchars($gov['color'], ENT_QUOTES, 'UTF-8') ?>;">
+              <?= (int) $gov['count'] ?>
+            </div>
+          </button>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Contacts by Delegation -->
+  <div class="bg-white rounded-2xl shadow-sm p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-slate-900">Contacts par delegation</h3>
+      <div class="text-xs text-slate-500">Cliquez pour filtrer</div>
+    </div>
+    <?php if (empty($delegationCards)): ?>
+      <div class="text-sm text-slate-500">Aucun contact avec coordonnees.</div>
+    <?php else: ?>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+        <?php foreach ($delegationCards as $del): ?>
+          <button type="button"
+                  class="text-left rounded-xl border px-4 py-3 hover:bg-slate-50 transition-colors"
+                  style="border-color: <?= htmlspecialchars($del['color'], ENT_QUOTES, 'UTF-8') ?>;"
+                  data-filter-gov="<?= (int) $del['gov_id'] ?>"
+                  data-filter-city="<?= htmlspecialchars($del['city_name'], ENT_QUOTES, 'UTF-8') ?>">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-semibold text-slate-900"><?= htmlspecialchars($del['city_name'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="text-xs text-slate-500"><?= htmlspecialchars($del['gov_name'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+              </div>
+              <div class="text-lg font-bold" style="color: <?= htmlspecialchars($del['color'], ENT_QUOTES, 'UTF-8') ?>;">
+                <?= (int) $del['count'] ?>
+              </div>
+            </div>
+          </button>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- Filters -->
@@ -411,7 +559,8 @@ require __DIR__ . '/../includes/header.php';
   (function () {
     var repData = <?= json_encode($repData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     var geojsonData = <?= json_encode($geojsonData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-    var governorateColors = <?= json_encode($governorateColorsMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    var governorateColors = <?= json_encode($governorateColorKeys, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    var unassignedPoints = <?= json_encode($unassignedPoints, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     
     // Initialize map
     var map = L.map('delegues-map').setView([34.0, 9.0], 6.5);
@@ -516,6 +665,29 @@ require __DIR__ . '/../includes/header.php';
       repLayers[rep.id] = group;
     });
 
+    // Add unassigned contact markers
+    var unassignedMarkers = [];
+    (unassignedPoints || []).forEach(function(point) {
+      var marker = L.circleMarker([point.lat, point.lng], {
+        radius: 7,
+        color: '#0f172a',
+        fillColor: '#e2e8f0',
+        fillOpacity: 0.9,
+        weight: 2,
+        dashArray: '4 3',
+        dataGovId: point.gov_id || '',
+        dataCity: point.city || ''
+      });
+      var popupContent = '<div class="text-sm">' +
+        '<strong class="text-slate-900">Non assigne</strong><br>' +
+        '<span class="text-slate-600">Contact #' + point.name + '</span><br>' +
+        '<span class="text-xs text-slate-500">' + (point.city || '') + '</span>' +
+        '</div>';
+      marker.bindPopup(popupContent);
+      unassignedMarkers.push(marker);
+      markerClusterGroup.addLayer(marker);
+    });
+
     // Add all markers to cluster
     Object.values(repMarkers).forEach(function(markers) {
       markers.forEach(function(m) {
@@ -583,7 +755,7 @@ require __DIR__ . '/../includes/header.php';
       var container = document.getElementById('legend-list');
       container.innerHTML = '';
       
-      if (!list.length) {
+      if (!list.length && !unassignedMarkers.length) {
         container.innerHTML = '<div class="text-xs text-slate-500">Aucun delegue pour ce filtre.</div>';
         return;
       }
@@ -591,17 +763,34 @@ require __DIR__ . '/../includes/header.php';
       list.forEach(function(rep) {
         var item = document.createElement('div');
         item.className = 'flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors';
+        var missingGps = rep.missing_gps || 0;
+        var missingBadge = missingGps > 0
+          ? '<span class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">Sans GPS: ' + missingGps + '</span>'
+          : '';
         item.innerHTML = 
           '<span class="inline-block w-3 h-3 rounded-full" style="background:' + rep.color + '"></span>' +
           '<div class="flex flex-col">' +
             '<span class="font-medium text-slate-900">' + rep.name + '</span>' +
             '<span class="text-slate-500">' + rep.governorate_name + ' (' + rep.contacts_count + ' contacts)</span>' +
+            missingBadge +
           '</div>';
         item.addEventListener('click', function() {
           showDelegueDetails(rep);
         });
         container.appendChild(item);
       });
+
+      if (unassignedMarkers.length) {
+        var item = document.createElement('div');
+        item.className = 'flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2';
+        item.innerHTML = 
+          '<span class="inline-block w-3 h-3 rounded-full border border-slate-400 bg-slate-200"></span>' +
+          '<div class="flex flex-col">' +
+            '<span class="font-medium text-slate-900">Non assigne</span>' +
+            '<span class="text-slate-500">Contacts GPS sans delegue</span>' +
+          '</div>';
+        container.appendChild(item);
+      }
     }
 
     // Filter logic
@@ -610,8 +799,9 @@ require __DIR__ . '/../includes/header.php';
       
       if (term && !hay.includes(term)) {
         var found = false;
-        (rep.points || []).forEach(function(p) {
-          if (p.name.toLowerCase().includes(term)) {
+        (rep.contact_points || []).forEach(function(p) {
+          var cityName = (p.city || '').toLowerCase();
+          if (cityName && cityName.includes(term)) {
             found = true;
           }
         });
@@ -644,6 +834,22 @@ require __DIR__ . '/../includes/header.php';
           visibleMarkers = visibleMarkers.concat(repMarkers[rep.id] || []);
         }
       });
+
+      // Unassigned markers: respect filters
+      if (unassignedMarkers.length) {
+        if (!govId && !term) {
+          visibleMarkers = visibleMarkers.concat(unassignedMarkers);
+        } else if (govId) {
+          visibleMarkers = visibleMarkers.concat(unassignedMarkers.filter(function(m) {
+            return String(m.options.dataGovId) === String(govId);
+          }));
+        } else if (term) {
+          visibleMarkers = visibleMarkers.concat(unassignedMarkers.filter(function(m) {
+            var city = (m.options.dataCity || '').toLowerCase();
+            return city && city.includes(term);
+          }));
+        }
+      }
       
       // Update marker cluster
       markerClusterGroup.clearLayers();
@@ -654,6 +860,33 @@ require __DIR__ . '/../includes/header.php';
       renderLegend(filtered);
     }
 
+    function bindZoneCards() {
+      var cards = document.querySelectorAll('[data-filter-gov], [data-filter-city]');
+      var repSearch = document.getElementById('repSearch');
+      var govFilter = document.getElementById('govFilter');
+
+      cards.forEach(function(card) {
+        card.addEventListener('click', function() {
+          var govId = card.getAttribute('data-filter-gov') || '';
+          var city = card.getAttribute('data-filter-city') || '';
+
+          if (govId) {
+            govFilter.value = govId;
+          }
+          if (city) {
+            repSearch.value = city;
+          } else {
+            repSearch.value = '';
+          }
+          applyFilter();
+          var mapEl = document.getElementById('delegues-map');
+          if (mapEl) {
+            mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    }
+
     // Event listeners
     document.getElementById('repSearch').addEventListener('input', applyFilter);
     document.getElementById('govFilter').addEventListener('change', applyFilter);
@@ -661,6 +894,7 @@ require __DIR__ . '/../includes/header.php';
 
     // Initial render
     renderLegend(repData);
+    bindZoneCards();
   })();
 </script>
 

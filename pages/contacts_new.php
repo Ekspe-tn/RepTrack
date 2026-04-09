@@ -127,6 +127,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = $editing ? 'Modifier un contact' : 'Nouveau contact';
+$specialtyOptions = [
+    'M&eacute;decin g&eacute;n&eacute;raliste',
+    'M&eacute;decine interne',
+    'Cardiologue',
+    'Pneumologue',
+    'Gastro-ent&eacute;rologue',
+    'Endocrinologue',
+    'N&eacute;phrologue',
+    'H&eacute;matologue',
+    'Oncologue',
+    'Infectiologue',
+    'Dermatologue',
+    'Rhumatologue',
+    'Neurologue',
+    'Psychiatre',
+    'P&eacute;diatre',
+    'Gyn&eacute;cologue',
+    'ORL',
+    'M&eacute;decin du travail',
+    'M&eacute;decin du sport',
+    'Urgentiste',
+    'Orthop&eacute;diste',
+];
 require __DIR__ . '/../includes/header.php';
 ?>
 
@@ -178,10 +201,20 @@ require __DIR__ . '/../includes/header.php';
             <label class="block text-sm font-medium text-slate-700">Nom</label>
             <input type="text" name="name" value="<?= htmlspecialchars($editContact['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" required>
           </div>
-        </div>
+      </div>
         <div data-specialty-field class="hidden mt-4">
           <label class="block text-sm font-medium text-slate-700">Specialite</label>
-          <input type="text" name="specialty" value="<?= htmlspecialchars($editContact['specialty'] ?? '', ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" data-specialty-input>
+          <select name="specialty" class="mt-1 w-full h-11 rounded-lg border border-slate-200 px-3" data-specialty-input>
+            <option value="">Choisir une specialite</option>
+            <?php
+            $selectedSpecialty = (string) ($editContact['specialty'] ?? '');
+            foreach ($specialtyOptions as $optionHtml):
+                $optionValue = html_entity_decode($optionHtml, ENT_QUOTES, 'UTF-8');
+                $selected = $selectedSpecialty === $optionValue ? 'selected' : '';
+                echo '<option value="' . $optionHtml . '" ' . $selected . '>' . $optionHtml . '</option>';
+            endforeach;
+            ?>
+          </select>
         </div>
       </div>
 

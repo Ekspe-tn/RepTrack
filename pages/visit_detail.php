@@ -22,7 +22,7 @@ if ($role !== 'admin') {
 }
 
 try {
-    $stmt = db()->prepare("SELECT v.*, c.name AS contact_name, c.type AS contact_type, c.phone, c.address, g.name_fr AS governorate_name, ci.name_fr AS city_name, u.name AS rep_name\n        FROM visits v\n        JOIN contacts c ON c.id = v.contact_id\n        JOIN governorates g ON g.id = c.governorate_id\n        JOIN cities ci ON ci.id = c.city_id\n        JOIN users u ON u.id = v.user_id\n        WHERE $where\n        LIMIT 1");
+    $stmt = db()->prepare("SELECT v.*, c.id AS contact_id, c.name AS contact_name, c.type AS contact_type, c.phone, c.address, g.name_fr AS governorate_name, ci.name_fr AS city_name, u.name AS rep_name\n        FROM visits v\n        JOIN contacts c ON c.id = v.contact_id\n        JOIN governorates g ON g.id = c.governorate_id\n        JOIN cities ci ON ci.id = c.city_id\n        JOIN users u ON u.id = v.user_id\n        WHERE $where\n        LIMIT 1");
     $stmt->execute($params);
     $visit = $stmt->fetch();
 } catch (Throwable $e) {
@@ -52,7 +52,11 @@ require __DIR__ . '/../includes/header.php';
 <div class="space-y-4">
   <div class="bg-white rounded-2xl shadow-sm p-4">
     <div class="text-sm text-slate-500">Contact</div>
-    <div class="text-lg font-semibold text-slate-900"><?= htmlspecialchars($visit['contact_name'], ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="text-lg font-semibold text-slate-900">
+      <a href="/contacts/view?id=<?= (int) $visit['contact_id'] ?? 0 ?>" class="hover:text-blue-600">
+        <?= htmlspecialchars($visit['contact_name'], ENT_QUOTES, 'UTF-8') ?>
+      </a>
+    </div>
     <div class="text-xs text-slate-500 mt-1">
       <?= htmlspecialchars($visit['contact_type'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($visit['governorate_name'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($visit['city_name'], ENT_QUOTES, 'UTF-8') ?>
     </div>

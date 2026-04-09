@@ -187,7 +187,9 @@ require __DIR__ . '/../includes/header.php';
                 <tr class="hover:bg-slate-50 transition-colors">
                   <td class="px-4 py-3">
                     <div class="text-sm font-medium text-slate-900">
-                      <?= htmlspecialchars($contact['name'], ENT_QUOTES, 'UTF-8') ?>
+                      <a href="/contacts/view?id=<?= (int) $contact['id'] ?>" class="hover:text-blue-600">
+                        <?= htmlspecialchars($contact['name'], ENT_QUOTES, 'UTF-8') ?>
+                      </a>
                     </div>
                     <div class="text-xs text-slate-500">
                       <?= htmlspecialchars($contact['phone'] ?: '-', ENT_QUOTES, 'UTF-8') ?>

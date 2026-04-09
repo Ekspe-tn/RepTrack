@@ -6,6 +6,7 @@ $user = current_user();
 $role = $user['role'] ?? 'rep';
 $selectedType = (string) ($_GET['type'] ?? 'all');
 $repId = (int) ($_GET['rep_id'] ?? 0);
+$contactId = (int) ($_GET['contact_id'] ?? 0);
 $search = trim((string) ($_GET['q'] ?? ''));
 $export = ((string) ($_GET['export'] ?? '')) === 'csv';
 $allowedTypes = ['all', 'rappel', 'presentation', 'formation'];
@@ -40,6 +41,11 @@ if ($selectedType !== 'all') {
     $params[] = $selectedType;
 }
 
+if ($contactId > 0) {
+    $conditions[] = 'v.contact_id = ?';
+    $params[] = $contactId;
+}
+
 if ($search !== '') {
     $conditions[] = '(c.name LIKE ? OR u.name LIKE ? OR v.visit_type LIKE ?)';
     $params[] = '%' . $search . '%';
@@ -51,7 +57,7 @@ $whereSql = $conditions ? ('WHERE ' . implode(' AND ', $conditions)) : '';
 $limitSql = $export ? 'LIMIT 5000' : 'LIMIT 50';
 
 try {
-    $stmt = db()->prepare("SELECT v.id, v.visit_type, v.created_at, c.name AS contact_name, c.type AS contact_type, u.name AS rep_name\n        FROM visits v\n        JOIN contacts c ON c.id = v.contact_id\n        JOIN users u ON u.id = v.user_id\n        $whereSql\n        ORDER BY v.created_at DESC\n        $limitSql");
+    $stmt = db()->prepare("SELECT v.id, v.visit_type, v.created_at, c.id AS contact_id, c.name AS contact_name, c.type AS contact_type, u.name AS rep_name\n        FROM visits v\n        JOIN contacts c ON c.id = v.contact_id\n        JOIN users u ON u.id = v.user_id\n        $whereSql\n        ORDER BY v.created_at DESC\n        $limitSql");
     $stmt->execute($params);
     $visits = $stmt->fetchAll();
 } catch (Throwable $e) {
@@ -89,6 +95,9 @@ require __DIR__ . '/../includes/header.php';
       <a href="/visits/new" class="text-xs text-blue-600">Nouvelle visite</a>
     </div>
     <form method="get" class="mt-3 grid grid-cols-1 gap-3">
+      <?php if ($contactId > 0): ?>
+        <input type="hidden" name="contact_id" value="<?= (int) $contactId ?>">
+      <?php endif; ?>
       <div>
         <label class="block text-sm font-medium text-slate-700">Recherche</label>
         <input type="text" name="q" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" placeholder="Contact ou delegue">
@@ -119,9 +128,12 @@ require __DIR__ . '/../includes/header.php';
     </form>
     <?php
       $exportUrl = '/visits?export=csv&type=' . urlencode($selectedType);
-      if ($repId > 0) {
-          $exportUrl .= '&rep_id=' . urlencode((string) $repId);
-      }
+    if ($repId > 0) {
+        $exportUrl .= '&rep_id=' . urlencode((string) $repId);
+    }
+    if ($contactId > 0) {
+        $exportUrl .= '&contact_id=' . urlencode((string) $contactId);
+    }
       if ($search !== '') {
           $exportUrl .= '&q=' . urlencode($search);
       }
@@ -135,11 +147,13 @@ require __DIR__ . '/../includes/header.php';
     <?php else: ?>
       <div class="space-y-3">
         <?php foreach ($visits as $visit): ?>
-          <a href="/visits/view?id=<?= (int) $visit['id'] ?>" class="block border border-slate-100 rounded-xl px-3 py-2 hover:bg-slate-50">
+          <div class="border border-slate-100 rounded-xl px-3 py-2 hover:bg-slate-50">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-sm font-medium text-slate-900">
-                  <?= htmlspecialchars($visit['contact_name'], ENT_QUOTES, 'UTF-8') ?>
+                  <a href="/contacts/view?id=<?= (int) $visit['contact_id'] ?? 0 ?>" class="hover:text-blue-600">
+                    <?= htmlspecialchars($visit['contact_name'], ENT_QUOTES, 'UTF-8') ?>
+                  </a>
                   <span class="text-xs text-slate-500">(<?= htmlspecialchars($visit['contact_type'], ENT_QUOTES, 'UTF-8') ?>)</span>
                 </div>
                 <div class="text-xs text-slate-500">
@@ -150,7 +164,12 @@ require __DIR__ . '/../includes/header.php';
                 <?= htmlspecialchars($visit['rep_name'], ENT_QUOTES, 'UTF-8') ?>
               </div>
             </div>
-          </a>
+            <div class="mt-2">
+              <a href="/visits/view?id=<?= (int) $visit['id'] ?>" class="text-xs text-blue-600 hover:text-blue-800">
+                Voir visite
+              </a>
+            </div>
+          </div>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

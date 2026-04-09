@@ -34,6 +34,24 @@ try {
     $products = [];
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    $prefContactId = (int) ($_GET['contact_id'] ?? 0);
+    if ($prefContactId > 0) {
+        try {
+            $stmt = db()->prepare('SELECT id, governorate_id, city_id FROM contacts WHERE id = ? AND active = 1 LIMIT 1');
+            $stmt->execute([$prefContactId]);
+            $prefContact = $stmt->fetch();
+            if ($prefContact) {
+                $form['contact_id'] = (string) $prefContact['id'];
+                $form['governorate_id'] = (string) $prefContact['governorate_id'];
+                $form['city_id'] = (string) $prefContact['city_id'];
+            }
+        } catch (Throwable $e) {
+            // ignore prefill errors
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
 
@@ -246,6 +264,11 @@ require __DIR__ . '/../includes/header.php';
         <select name="contact_id" class="mt-1 w-full h-12 rounded-xl border border-slate-200 px-3" data-contact-select data-contact-selected="<?= htmlspecialchars((string) $form['contact_id'], ENT_QUOTES, 'UTF-8') ?>" x-model="form.contact_id" required>
           <option value="">Choisir un contact</option>
         </select>
+        <div class="mt-2">
+          <a href="#" class="text-xs text-blue-600 opacity-50 pointer-events-none" data-contact-profile-link>
+            Ouvrir profil
+          </a>
+        </div>
       </div>
       <div class="mt-3">
         <label class="block text-sm font-medium text-slate-700">Type de visite</label>

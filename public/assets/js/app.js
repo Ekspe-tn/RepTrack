@@ -62,10 +62,33 @@
           }
           contactSelect.appendChild(option);
         });
+        syncContactProfileLink(contactSelect);
       })
       .catch(function () {
         // silent fail for now
       });
+  }
+
+  function syncContactProfileLink(contactSelect) {
+    if (!contactSelect) {
+      return;
+    }
+    var group = contactSelect.closest('[data-city-group]') || contactSelect.parentElement;
+    if (!group) {
+      return;
+    }
+    var link = group.querySelector('[data-contact-profile-link]');
+    if (!link) {
+      return;
+    }
+    var contactId = contactSelect.value;
+    if (contactId) {
+      link.href = '/contacts/view?id=' + encodeURIComponent(contactId);
+      link.classList.remove('opacity-50', 'pointer-events-none');
+    } else {
+      link.href = '#';
+      link.classList.add('opacity-50', 'pointer-events-none');
+    }
   }
 
   function initDelegueZoneSelectors() {
@@ -282,6 +305,101 @@
     });
   }
 
+  function initGpsCapture() {
+    var forms = document.querySelectorAll('[data-gps-form]');
+
+    forms.forEach(function (form) {
+      var button = form.querySelector('[data-gps-button]');
+      var latInput = form.querySelector('[data-gps-lat]');
+      var lngInput = form.querySelector('[data-gps-lng]');
+      var status = form.querySelector('[data-gps-status]');
+      var helper = form.closest('.bg-white') ? form.closest('.bg-white').querySelector('[data-gps-helper]') : null;
+
+      if (!button || !latInput || !lngInput) {
+        return;
+      }
+
+      function setStatus(text) {
+        if (status) {
+          status.textContent = text || '';
+        }
+      }
+
+      function showHelper(show) {
+        if (!helper) {
+          return;
+        }
+        if (show) {
+          helper.classList.remove('hidden');
+        } else {
+          helper.classList.add('hidden');
+        }
+      }
+
+      function precheck() {
+        if (!window.isSecureContext || !navigator.geolocation) {
+          showHelper(true);
+          return;
+        }
+        if (navigator.permissions && navigator.permissions.query) {
+          navigator.permissions.query({ name: 'geolocation' }).then(function (status) {
+            if (status && status.state === 'denied') {
+              showHelper(true);
+            }
+          }).catch(function () {
+            // ignore
+          });
+        }
+      }
+
+      precheck();
+
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (!window.isSecureContext) {
+          setStatus('Geolocalisation requiert HTTPS (ou localhost).');
+          showHelper(true);
+          return;
+        }
+        if (!navigator.geolocation) {
+          setStatus('Geolocalisation non supportee.');
+          showHelper(true);
+          return;
+        }
+
+        button.disabled = true;
+        showHelper(false);
+        setStatus('Localisation en cours...');
+
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          latInput.value = pos.coords.latitude.toFixed(7);
+          lngInput.value = pos.coords.longitude.toFixed(7);
+          setStatus('Coordonnees recuperees.');
+          form.submit();
+        }, function (err) {
+          button.disabled = false;
+          if (err && err.code === 1) {
+            setStatus('Autorisation GPS refusee.');
+            showHelper(true);
+          } else if (err && err.code === 2) {
+            setStatus('Position indisponible.');
+            showHelper(true);
+          } else if (err && err.code === 3) {
+            setStatus('Delai GPS depasse.');
+            showHelper(true);
+          } else {
+            setStatus('Impossible d\'obtenir la position.');
+            showHelper(true);
+          }
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+    });
+  }
+
 
   function initSpecialtyFields() {
     var typeSelects = document.querySelectorAll('[data-type-select]');
@@ -346,12 +464,20 @@
         }
       });
 
+      if (contactSelect) {
+        contactSelect.addEventListener('change', function () {
+          syncContactProfileLink(contactSelect);
+        });
+      }
+
       if (governorateSelect.value) {
         loadCities(governorateSelect, citySelect, function () {
           if (contactSelect && citySelect.value) {
             loadContacts(governorateSelect.value, citySelect.value, contactSelect);
           }
         });
+      } else if (contactSelect) {
+        syncContactProfileLink(contactSelect);
       }
     });
 
@@ -359,6 +485,7 @@
     initSpecialtyFields();
     initDelegueZoneSelectors();
     initZoneConflictPreview();
+    initGpsCapture();
   });
 })();
 
