@@ -246,7 +246,15 @@ require __DIR__ . '/../includes/header.php';
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div>
           <div class="text-xs text-slate-500">Telephone</div>
-          <div class="text-slate-900 font-medium"><?= htmlspecialchars($contact['phone'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+          <?php if (!empty($contact['phone'])): ?>
+            <a href="tel:<?= htmlspecialchars($contact['phone'], ENT_QUOTES, 'UTF-8') ?>" 
+               class="text-blue-600 font-medium hover:text-blue-800">
+              <i class="fas fa-phone mr-1"></i>
+              <?= htmlspecialchars($contact['phone'], ENT_QUOTES, 'UTF-8') ?>
+            </a>
+          <?php else: ?>
+            <div class="text-slate-900 font-medium">-</div>
+          <?php endif; ?>
         </div>
         <div>
           <div class="text-xs text-slate-500">Email</div>
