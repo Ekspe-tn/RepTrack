@@ -41,7 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($_FILES['photo']['name'])) {
                     $uploadDir = dirname(__DIR__) . '/public/uploads/products/';
                     if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
+                        if (!mkdir($uploadDir, 0755, true)) {
+                            throw new RuntimeException('Impossible de creer le repertoire de telechargement.');
+                        }
+                    }
+                    
+                    // Check if directory is writable
+                    if (!is_writable($uploadDir)) {
+                        throw new RuntimeException('Le repertoire de telechargement n\'est pas accessible en ecriture.');
                     }
                     
                     $fileInfo = pathinfo($_FILES['photo']['name']);
@@ -55,11 +62,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw new RuntimeException('L\'image ne doit pas depasser 5Mo.');
                     }
                     
+                    // Validate image dimensions (must be at least 1000x1000)
+                    $imageInfo = getimagesize($_FILES['photo']['tmp_name']);
+                    if ($imageInfo === false) {
+                        throw new RuntimeException('Impossible de lire les dimensions de l\'image.');
+                    }
+                    
+                    $width = $imageInfo[0];
+                    $height = $imageInfo[1];
+                    
+                    if ($width < 1000 || $height < 1000) {
+                        throw new RuntimeException('L\'image doit faire au moins 1000x1000 pixels. Dimensions actuelles: ' . $width . 'x' . $height);
+                    }
+                    
+                    // Validate square aspect ratio (allow 1% tolerance)
+                    $ratio = $width / $height;
+                    if ($ratio < 0.99 || $ratio > 1.01) {
+                        throw new RuntimeException('L\'image doit etre carree (ratio 1:1). Dimensions actuelles: ' . $width . 'x' . $height);
+                    }
+                    
                     $fileName = uniqid('product_', true) . '.' . $extension;
                     $filePath = $uploadDir . $fileName;
                     
                     if (!move_uploaded_file($_FILES['photo']['tmp_name'], $filePath)) {
-                        throw new RuntimeException('Erreur lors du telechargement de l\'image.');
+                        $uploadError = error_get_last();
+                        $errorMsg = $uploadError['message'] ?? 'Erreur inconnue';
+                        throw new RuntimeException('Erreur lors du telechargement de l\'image: ' . $errorMsg);
                     }
                     
                     $photoPath = '/uploads/products/' . $fileName;
@@ -248,7 +276,7 @@ require __DIR__ . '/../includes/header.php';
                      name="photo" 
                      accept="image/jpeg,image/png,image/gif,image/webp"
                      class="w-full h-12 rounded-xl border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium hover:file:bg-blue-100">
-              <p class="text-xs text-slate-500 mt-1">Formats acceptes: JPG, PNG, GIF, WebP (max 5Mo)</p>
+              <p class="text-xs text-slate-500 mt-1">Formats: JPG, PNG, GIF, WebP (min 1000x1000px, carree, max 5Mo)</p>
             </div>
           </div>
           

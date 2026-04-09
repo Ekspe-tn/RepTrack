@@ -111,11 +111,35 @@ foreach ($stock as $item) {
     }
 }
 
-// Calculate total samples distributed from the beginning
+// Calculate total samples distributed from beginning
 try {
     $totalSamplesDistributed = (int) db()->query('SELECT SUM(quantity) FROM stock_movements WHERE movement_type = "add"')->fetchColumn();
+    
+    // Calculate total value of distributed samples
+    $totalSamplesValue = db()->query('
+        SELECT SUM(sm.quantity * p.cost)
+        FROM stock_movements sm
+        JOIN products p ON sm.product_id = p.id
+        WHERE sm.movement_type = "add"
+        AND p.cost IS NOT NULL
+    ')->fetchColumn();
+    $totalSamplesValue = (float) ($totalSamplesValue ?? 0);
+    
+    // Get samples distributed per product
+    $samplesByProduct = db()->query('
+        SELECT p.id, p.name, p.photo, 
+               SUM(sm.quantity) as total_samples,
+               SUM(sm.quantity * p.cost) as total_value
+        FROM stock_movements sm
+        JOIN products p ON sm.product_id = p.id
+        WHERE sm.movement_type = "add"
+        GROUP BY p.id, p.name, p.photo
+        ORDER BY total_samples DESC
+    ')->fetchAll();
 } catch (Throwable $e) {
     $totalSamplesDistributed = 0;
+    $totalSamplesValue = 0;
+    $samplesByProduct = [];
 }
 
 // Fetch delegates for assignment
@@ -223,12 +247,57 @@ require __DIR__ . '/../includes/header.php';
       <div>
         <div class="text-sm text-slate-500">Echantillons Distribues (depuis le debut)</div>
         <div class="text-2xl font-bold text-blue-600 mt-1"><?= number_format($totalSamplesDistributed) ?></div>
+        <div class="text-sm text-slate-600 mt-1">Valeur Totale: <?= number_format($totalSamplesValue, 2) ?> DT</div>
       </div>
       <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
         <i class="fas fa-hand-holding text-blue-600 text-xl"></i>
       </div>
     </div>
   </div>
+
+  <!-- Samples by Product Cards -->
+  <?php if (!empty($samplesByProduct)): ?>
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-100">
+        <h2 class="text-lg font-semibold text-slate-900">Echantillons Distribues par Produit</h2>
+        <p class="text-sm text-slate-500 mt-1">Details par produit depuis le debut</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
+        <?php foreach ($samplesByProduct as $sample): ?>
+          <div class="rounded-xl border border-slate-200 p-4 hover:border-blue-300 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
+                <?php if (!empty($sample['photo'])): ?>
+                  <img src="<?= htmlspecialchars($sample['photo'], ENT_QUOTES, 'UTF-8') ?>" 
+                       alt="<?= htmlspecialchars($sample['name'], ENT_QUOTES, 'UTF-8') ?>"
+                       class="w-full h-full object-cover">
+                <?php else: ?>
+                  <div class="w-full h-full flex items-center justify-center">
+                    <i class="fas fa-box text-slate-400"></i>
+                  </div>
+                <?php endif; ?>
+              </div>
+              
+              <div class="flex-grow min-w-0">
+                <h3 class="text-sm font-semibold text-slate-900 truncate">
+                  <?= htmlspecialchars($sample['name'], ENT_QUOTES, 'UTF-8') ?>
+                </h3>
+                <div class="text-sm text-slate-600 mt-1">
+                  <?= number_format((int)$sample['total_samples']) ?> echantillons
+                </div>
+                <?php if (!empty($sample['total_value'])): ?>
+                  <div class="text-xs text-orange-600 mt-1">
+                    Valeur: <?= number_format((float)$sample['total_value'], 2) ?> DT
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endif; ?>
 
   <!-- Products Grid -->
   <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
