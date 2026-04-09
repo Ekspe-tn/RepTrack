@@ -23,11 +23,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'update_gps') {
         $postedId = (int) ($_POST['contact_id'] ?? 0);
+        $plusCode = trim((string) ($_POST['plus_code'] ?? ''));
         $latRaw = trim((string) ($_POST['latitude'] ?? ''));
         $lngRaw = trim((string) ($_POST['longitude'] ?? ''));
 
         if ($postedId !== $contactId) {
             $error = 'Contact invalide.';
+        } elseif ($plusCode !== '') {
+            // Convert Plus Code to lat/long using Google Maps API
+            $apiKey = getenv('GOOGLE_MAPS_API_KEY') ?: '';
+            if ($apiKey === '') {
+                $error = 'API Google Maps non configuree. Ajoutez GOOGLE_MAPS_API_KEY dans le fichier .env';
+            } else {
+                $plusCodeEncoded = urlencode($plusCode);
+                $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={$plusCodeEncoded}&key={$apiKey}";
+                $response = file_get_contents($geocodeUrl);
+                $data = json_decode($response, true);
+                
+                if ($data && $data['status'] === 'OK' && !empty($data['results'])) {
+                    $lat = $data['results'][0]['geometry']['location']['lat'];
+                    $lng = $data['results'][0]['geometry']['location']['lng'];
+                    
+                    try {
+                        $stmt = db()->prepare('UPDATE contacts SET latitude = ?, longitude = ? WHERE id = ?');
+                        $stmt->execute([$lat, $lng, $contactId]);
+                        $success = 'Coordonnees GPS enregistrees depuis le Plus Code.';
+                    } catch (Throwable $e) {
+                        $error = 'Impossible de mettre a jour les coordonnees.';
+                    }
+                } else {
+                    $error = 'Plus Code invalide ou introuvable.';
+                }
+            }
         } elseif ($latRaw === '' || $lngRaw === '') {
             $error = 'Coordonnees GPS manquantes.';
         } elseif (!is_numeric($latRaw) || !is_numeric($lngRaw)) {
@@ -314,6 +341,24 @@ require __DIR__ . '/../includes/header.php';
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="update_gps">
         <input type="hidden" name="contact_id" value="<?= (int) $contactId ?>">
+        
+        <div>
+          <label class="block text-xs text-slate-500">Google Plus Code</label>
+          <input type="text" name="plus_code"
+                 placeholder="Ex: QP4V+9X Sfax"
+                 class="mt-1 w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
+          <p class="text-xs text-slate-500 mt-1">Entrez un code comme "QP4V+9X Sfax" et cliquez sur Enregistrer</p>
+        </div>
+        
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-slate-200"></div>
+          </div>
+          <div class="relative flex justify-center text-xs">
+            <span class="px-2 bg-white text-slate-500">Ou</span>
+          </div>
+        </div>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-slate-500">Latitude</label>

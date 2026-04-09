@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sesSecret = trim((string) ($_POST['ses_secret_key'] ?? ''));
             $sesRegion = trim((string) ($_POST['ses_region'] ?? ''));
             $sendgridKey = trim((string) ($_POST['sendgrid_api_key'] ?? ''));
+            $googleMapsKey = trim((string) ($_POST['google_maps_api_key'] ?? ''));
             $twilioSid = trim((string) ($_POST['twilio_account_sid'] ?? ''));
             $twilioToken = trim((string) ($_POST['twilio_auth_token'] ?? ''));
             $twilioPhone = trim((string) ($_POST['twilio_phone_number'] ?? ''));
@@ -40,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'SES_SECRET_KEY' => $sesSecret,
                 'SES_REGION' => $sesRegion,
                 'SENDGRID_API_KEY' => $sendgridKey,
+                'GOOGLE_MAPS_API_KEY' => $googleMapsKey,
                 'TWILIO_ACCOUNT_SID' => $twilioSid,
                 'TWILIO_AUTH_TOKEN' => $twilioToken,
                 'TWILIO_PHONE_NUMBER' => $twilioPhone,
@@ -92,6 +94,7 @@ $sesKey = $envValues['SES_ACCESS_KEY'] ?? '';
 $sesSecret = $envValues['SES_SECRET_KEY'] ?? '';
 $sesRegion = $envValues['SES_REGION'] ?? 'us-east-1';
 $sendgridKey = $envValues['SENDGRID_API_KEY'] ?? '';
+$googleMapsKey = $envValues['GOOGLE_MAPS_API_KEY'] ?? '';
 $twilioSid = $envValues['TWILIO_ACCOUNT_SID'] ?? '';
 $twilioToken = $envValues['TWILIO_AUTH_TOKEN'] ?? '';
 $twilioPhone = $envValues['TWILIO_PHONE_NUMBER'] ?? '';
@@ -192,6 +195,23 @@ require __DIR__ . '/../includes/header.php';
                    class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm"
                    placeholder="SG.xxxxx">
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h2 class="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-map-marked-alt text-blue-600"></i>
+        Cartes et Localisation (Google Maps)
+      </h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">API Key</label>
+          <input type="password" name="google_maps_api_key" 
+                 value="<?= htmlspecialchars($googleMapsKey, ENT_QUOTES, 'UTF-8') ?>"
+                 class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm"
+                 placeholder="AIzaSyxxxxxxxxxxxxxxx">
+          <p class="text-xs text-slate-500 mt-1">Necessaire pour les codes Plus Codes (ex: QP4V+9X Sfax)</p>
         </div>
       </div>
     </div>
