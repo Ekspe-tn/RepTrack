@@ -44,10 +44,12 @@ if ($repId <= 0) {
 }
 
 try {
-    $rep = db()->query("SELECT u.id, u.name, u.governorate_id, u.governorate_ids, u.excluded_city_ids, g.name_fr AS governorate_name
+    $stmt = db()->prepare("SELECT u.id, u.name, u.governorate_id, u.governorate_ids, u.excluded_city_ids, g.name_fr AS governorate_name
         FROM users u
         LEFT JOIN governorates g ON g.id = u.governorate_id
-        WHERE u.id = ? AND u.role = 'rep'", [$repId])->fetch();
+        WHERE u.id = ? AND u.role = 'rep'");
+    $stmt->execute([$repId]);
+    $rep = $stmt->fetch();
 } catch (Throwable $e) {
     echo "Error fetching delegue: " . $e->getMessage();
     exit;
