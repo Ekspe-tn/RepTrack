@@ -62,10 +62,10 @@ if (file_exists($areasFile)) {
                 $coordIndex[$govKey] = [];
             }
             foreach ($gov['Delegations'] as $del) {
-                if (empty($del['Name']) || !isset($del['Latitude']) || !isset($del['Longitude'])) {
+                if (empty($del['Value']) || !isset($del['Latitude']) || !isset($del['Longitude'])) {
                     continue;
                 }
-                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $del['Name'])));
+                $cityKey = strtoupper(preg_replace('/[^A-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $del['Value'])));
                 $coordIndex[$govKey][$cityKey] = [
                     'lat' => (float) $del['Latitude'],
                     'lng' => (float) $del['Longitude'],
