@@ -37,6 +37,9 @@ if (file_exists($areasFile)) {
     }
 }
 
+// Debug: Show available governorate keys
+$availableGovKeys = array_keys($coordIndex);
+
 // Fetch delegue data
 $repId = (int) ($_GET['rep_id'] ?? 0);
 if ($repId <= 0) {
@@ -159,8 +162,14 @@ require __DIR__ . '/../includes/header.php';
       <p class="text-sm text-slate-600">
         Governorates: <?= htmlspecialchars($rep['governorate_name'], ENT_QUOTES, 'UTF-8') ?><br>
         Excluded delegations: <?= count($excludedIds) ?><br>
-        Total cities in database: <?= count($allCities) ?>
+        Total cities in database: <?= count($allCities) ?><br>
+        Available governorate keys in areas.json: <?= count($availableGovKeys) ?>
       </p>
+      <?php if (!empty($availableGovKeys)): ?>
+        <div class="mt-2 p-3 rounded-lg bg-slate-50 text-xs">
+          <strong>Available governorate keys:</strong> <?= htmlspecialchars(implode(', ', $availableGovKeys), ENT_QUOTES, 'UTF-8') ?>
+        </div>
+      <?php endif; ?>
     </div>
     
     <h3 class="text-sm font-semibold text-slate-900 mb-3">Cities Analysis</h3>
