@@ -75,7 +75,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($curlError) {
                         $error = 'Erreur de connexion a Google Maps: ' . $curlError;
                     } elseif ($httpCode !== 200) {
-                        $error = 'Erreur HTTP ' . $httpCode . ' de Google Maps. Verifiez votre API key.';
+                        // Detailed 4xx error handling
+                        if ($httpCode >= 400 && $httpCode < 500) {
+                            switch ($httpCode) {
+                                case 400:
+                                    $error = 'Erreur 400: Requete invalide. Verifiez le format du Plus Code. Les codes courts (ex: "QP4V+9X Sfax") nécessitent une ville.';
+                                    break;
+                                case 401:
+                                case 403:
+                                    $error = 'Erreur ' . $httpCode . ': API key refusee ou invalide. Verifiez: 1) API key correcte dans .env, 2) APIs activées dans Google Cloud, 3) Restrictions sur la clé IP/API. Voir docs/GOOGLE_MAPS_API_SETUP.md';
+                                    break;
+                                case 404:
+                                    $error = 'Erreur 404: Service Google Maps non trouvé. Verifiez que l\'API Geocoding est activée.';
+                                    break;
+                                case 429:
+                                    $error = 'Erreur 429: Trop de requêtes. Attendez quelques minutes avant de réessayer.';
+                                    break;
+                                default:
+                                    $error = 'Erreur HTTP ' . $httpCode . ' de Google Maps. Verifiez: API key, restrictions IP, et APIs activées. Voir docs/GOOGLE_MAPS_API_SETUP.md';
+                            }
+                        } else {
+                            $error = 'Erreur HTTP ' . $httpCode . ' de Google Maps. Verifiez votre API key.';
+                        }
                     } else {
                         $data = json_decode($response, true);
                         
