@@ -63,11 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            if (file_put_contents($envPath, $envContent)) {
-                $success = 'Configuration enregistree avec succes.';
-            } else {
-                $error = 'Impossible d\'enregistrer la configuration.';
+            // Ensure .env file exists and is writable
+            $envDir = dirname($envPath);
+            if (!is_dir($envDir)) {
+                throw new Exception('Repertoire .env introuvable: ' . $envDir);
             }
+            
+            if (!is_writable($envDir)) {
+                throw new Exception('Repertoire .env non accessible en ecriture. Veuillez verifier les permissions.');
+            }
+            
+            if (file_exists($envPath) && !is_writable($envPath)) {
+                throw new Exception('Fichier .env non accessible en ecriture. Veuillez verifier les permissions.');
+            }
+            
+            $bytesWritten = file_put_contents($envPath, $envContent);
+            if ($bytesWritten === false) {
+                throw new Exception('Erreur lors de l\'ecriture dans le fichier .env');
+            }
+            
+            $success = 'Configuration enregistree avec succes.';
         }
     } catch (Throwable $e) {
         $error = 'Erreur: ' . $e->getMessage();
