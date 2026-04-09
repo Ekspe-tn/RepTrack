@@ -1,0 +1,25 @@
+# Source files
+src/
+tests/
+demo/
+
+# Development files
+.github/
+.vscode/
+.editorconfig
+.eslintrc.js
+.prettierrc
+.gitignore
+tsconfig.json
+jest.config.js
+*.log
+
+# Build artifacts
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Documentation that doesn't need to be published
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+CHANGELOG.md
