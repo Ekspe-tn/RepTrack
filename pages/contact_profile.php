@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             else {
                 $apiKey = env_value('GOOGLE_MAPS_API_KEY') ?: '';
                 if ($apiKey === '') {
-                    $error = 'API Google Maps non configuree. Ajoutez GOOGLE_MAPS_API_KEY dans le fichier .env';
+                    $error = 'API Google Maps non configuree. Pour les codes courts (ex: "QP4V+9X Sfax"), ajoutez GOOGLE_MAPS_API_KEY dans .env. Pour les codes complets (ex: "8FRC+GQ4+XX"), l\'API n\'est pas necessaire.';
                 } else {
                     $plusCodeEncoded = urlencode($plusCode);
                     $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={$plusCodeEncoded}&key={$apiKey}";
