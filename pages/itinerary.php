@@ -13,13 +13,36 @@ $user = current_user();
 try {
     if ($user['role'] === 'rep') {
         $userId = $user['id'];
-        $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
-            FROM governorates g
-            JOIN users u ON (FIND_IN_SET(g.id, u.governorates) > 0 OR FIND_IN_SET(g.name_fr, u.governorates) > 0)
-            WHERE u.id = ?
-            ORDER BY g.name_fr');
-        $stmt->execute([$userId]);
-        $governorates = $stmt->fetchAll();
+        // Get only governorates assigned to this rep
+        // First try with governorate_ids (JSON column)
+        try {
+            $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
+                FROM governorates g
+                JOIN users u ON JSON_CONTAINS(JSON_EXTRACT(u.governorate_ids, "$"), CAST(g.id AS JSON))
+                WHERE u.id = ?
+                ORDER BY g.name_fr');
+            $stmt->execute([$userId]);
+            $governorates = $stmt->fetchAll();
+        } catch (Throwable $e) {
+            // Fallback to old governorates column (comma-separated)
+            try {
+                $stmt = db()->prepare('SELECT DISTINCT g.id, g.name_fr 
+                    FROM governorates g
+                    JOIN users u ON FIND_IN_SET(g.id, u.governorates) > 0
+                    WHERE u.id = ?
+                    ORDER BY g.name_fr');
+                $stmt->execute([$userId]);
+                $governorates = $stmt->fetchAll();
+            } catch (Throwable $e2) {
+                // If both fail, get user's governorate_id (single)
+                $stmt = db()->prepare('SELECT g.id, g.name_fr 
+                    FROM governorates g
+                    JOIN users u ON u.governorate_id = g.id
+                    WHERE u.id = ?');
+                $stmt->execute([$userId]);
+                $governorates = $stmt->fetchAll();
+            }
+        }
     } else {
         $governorates = db()->query('SELECT id, name_fr FROM governorates ORDER BY name_fr')->fetchAll();
     }
