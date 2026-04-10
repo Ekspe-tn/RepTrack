@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Apr 09, 2026 at 04:44 PM
+-- Generation Time: Apr 10, 2026 at 03:26 PM
 -- Server version: 8.4.7-7
 -- PHP Version: 8.1.34
 
@@ -357,7 +357,7 @@ INSERT INTO `contacts` (`id`, `type`, `name`, `specialty`, `establishment`, `gov
 (17, 'parapharmacie', 'Parapharmacie Du Bonheur', NULL, NULL, 17, 168, 'Route de Teniour Km 0.5 , en face du CNAM', NULL, NULL, '29 702 050', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:25:45'),
 (18, 'parapharmacie', 'Parapharmacie Royale', NULL, NULL, 17, 168, 'Les 100 mètres En face du Théâtre Municipal, 28 Av. Hedi Chaker', NULL, NULL, '44 432 888', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:26:18'),
 (19, 'parapharmacie', 'PARASTORE AIN', NULL, NULL, 17, 168, 'Résidence Khadija, Km 2 Rte El Ain', NULL, NULL, '98 763 082', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:26:48'),
-(20, 'parapharmacie', 'Parapharmacie plus sfax Teniour', NULL, NULL, 17, 168, 'QQ93+F92, Rte Teniour', NULL, NULL, '50 125 116', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:27:36'),
+(20, 'parapharmacie', 'Parapharmacie plus sfax Teniour', NULL, NULL, 17, 168, 'QQ93+F92, Rte Teniour', NULL, NULL, '50 125 116', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:27:36'),
 (21, 'parapharmacie', 'PARA PARAXI', NULL, NULL, 17, 168, '79 Av. des Martyrs', NULL, NULL, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:28:17'),
 (22, 'parapharmacie', 'PARAPHARMACIE PLUS ELAIN', NULL, NULL, 17, 168, 'RTE EL AIN KM2, SFAX, DEVANT PLYCLINIQUE', NULL, NULL, '53 125 979', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:28:54'),
 (23, 'parapharmacie', 'Paranaturalia', NULL, NULL, 17, 168, 'Résidence Aubergine, Route l\'afran, km4 rue Sidi Jilen', NULL, NULL, '26 400 759', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:29:22'),
@@ -376,8 +376,18 @@ INSERT INTO `contacts` (`id`, `type`, `name`, `specialty`, `establishment`, `gov
 (36, 'parapharmacie', 'Chouayakh Parapharmacie', NULL, NULL, 17, 168, 'PPRW+6JV, Rue El Kawthar', NULL, NULL, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:36:01'),
 (37, 'parapharmacie', 'Cosmedic', NULL, NULL, 17, 168, 'Polyclinique el basetine', NULL, NULL, '29 898 984', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:36:29'),
 (38, 'parapharmacie', 'Le Trio Médical', NULL, NULL, 17, 168, 'Route gremda km 2 en face complexe médical \"Syphax Médical Sfax', NULL, NULL, '56 728 418', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:37:04'),
-(39, 'parapharmacie', 'PARA GEXEL', NULL, NULL, 17, 168, '187 Av. Habib Bourguiba', NULL, NULL, '55 445 541', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:37:29'),
-(40, 'parapharmacie', 'PARASTORE NASRIA', NULL, NULL, 17, 168, 'Bloc B, Rez de chaussée, Imm Ribat, Km0 Rte Gremda', NULL, NULL, '98 763 081', NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:38:35');
+(39, 'parapharmacie', 'PARA GEXEL', NULL, NULL, 17, 168, '187 Av. Habib Bourguiba', 36.1766000, 8.6983000, '55 445 541', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:37:29'),
+(40, 'parapharmacie', 'PARASTORE NASRIA', NULL, NULL, 17, 168, 'Bloc B, Rez de chaussée, Imm Ribat, Km0 Rte Gremda', 36.1766000, 8.6983000, '98 763 081', NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 13:38:35'),
+(41, 'pharmacy', 'Pharmacien', NULL, NULL, 20, 207, 'H.sousse', 36.1906567, 10.4145717, '53 911 128', 'Uunokiaaa@gmail.com', NULL, 'independent', 'A', 'specialized', 'regular', 0, 'medium', NULL, 1, 4, 4, NULL, 1, '2026-04-09 19:01:41'),
+(42, 'doctor', 'Dr Madhi Anis', 'Médecin généraliste', NULL, 20, 205, '49MF+3MH، Unnamed Road, Enfidha', 36.1326875, 10.3742344, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 20:53:29'),
+(43, 'doctor', 'Dr Madhi Anis', 'Médecin généraliste', NULL, 20, 205, '49MF+3MH، Unnamed Road, Enfidha', 36.1326875, 10.3742344, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 20:55:26'),
+(44, 'doctor', 'Dr Ghadhab', 'Médecin généraliste', NULL, 20, 205, '49MH+24G, Enfidha', 36.1325625, 10.3778281, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 20:58:32'),
+(45, 'doctor', 'Dr Abderahmen Hmidi', 'Pédiatre', NULL, 20, 205, '49PG+284, C133, Enfidha', 36.1350125, 10.3758281, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 20:59:14'),
+(46, 'doctor', 'Dr Haykel Touil', 'Médecin généraliste', NULL, 20, 205, '49PM+H29, Av de la république, Enfidha', 36.1364125, 10.3826094, NULL, NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 21:00:25'),
+(47, 'doctor', 'Dr Baira Rochdi', 'Médecin généraliste', NULL, 20, 205, '49MJ+977, Enfidha', 36.1334125, 10.3806719, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 21:01:12'),
+(48, 'doctor', 'Dr Yazidi Amel', 'Gynécologue', NULL, 20, 205, '49MF+2PW, Enfidha', 36.1326125, 10.3743281, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 21:02:22'),
+(49, 'doctor', 'Dr Mhedhbi Med Haythem', 'Gynécologue', NULL, 20, 205, '49PJ+24 Enfidha', 36.1350625, 10.3803125, NULL, NULL, NULL, 'independent', 'B', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 21:03:27'),
+(50, 'hospital', 'Consultation Externe', NULL, NULL, 20, 205, '49M9+PHG, Unnamed Road, Enfidha', 36.1343125, 10.3689531, NULL, NULL, NULL, 'independent', 'A', 'local', 'new', 0, 'medium', NULL, 30, 3, 1, NULL, 1, '2026-04-09 21:04:20');
 
 -- --------------------------------------------------------
 
@@ -455,7 +465,9 @@ INSERT INTO `phinxlog` (`version`, `migration_name`, `start_time`, `end_time`, `
 (20260409012200, 'CreateVisitSamplesTable', '2026-04-09 10:50:46', '2026-04-09 10:50:46', 0),
 (20260409012300, 'CreateStockMovementsTable', '2026-04-09 10:50:46', '2026-04-09 10:50:46', 0),
 (20260409014000, 'CreateStockGlobalTable', '2026-04-09 12:39:20', '2026-04-09 12:39:20', 0),
-(20260409120000, 'AddZoneFieldsToUsers', '2026-04-09 12:39:20', '2026-04-09 12:39:20', 0);
+(20260409120000, 'AddZoneFieldsToUsers', '2026-04-09 12:39:20', '2026-04-09 12:39:20', 0),
+(20260409150000, 'AddMultipleGovernoratesToUsers', '2026-04-09 18:34:02', '2026-04-09 18:34:02', 0),
+(20260409160000, 'AddProductFields', '2026-04-09 18:34:02', '2026-04-09 18:34:02', 0);
 
 -- --------------------------------------------------------
 
@@ -466,10 +478,22 @@ INSERT INTO `phinxlog` (`version`, `migration_name`, `start_time`, `end_time`, `
 CREATE TABLE `products` (
   `id` bigint UNSIGNED NOT NULL,
   `name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cost` decimal(10,2) DEFAULT NULL,
+  `price` decimal(10,2) DEFAULT NULL,
+  `gtin13` varchar(13) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `specialities` text COLLATE utf8mb4_unicode_ci,
   `sku` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `products`
+--
+
+INSERT INTO `products` (`id`, `name`, `photo`, `cost`, `price`, `gtin13`, `specialities`, `sku`, `active`, `created_at`) VALUES
+(2, 'MagBoost 60 gélules', NULL, 6.91, 29.32, '6192446205232', NULL, 'MGBST', 1, '2026-04-09 22:27:15');
 
 -- --------------------------------------------------------
 
@@ -542,7 +566,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `governorate_id`, `governorate_ids`, `excluded_city_ids`, `phone`, `zone`, `active`, `last_login`, `created_at`) VALUES
 (1, 'Admin', 'admin@reptrack.tn', '$2y$12$/jv5CAZKLB55HLKY2Vlpj.rRP20fFjG.7ZwV8UpBF14XiHYhgSBEK', 'admin', NULL, NULL, NULL, NULL, NULL, 1, NULL, '2026-04-09 00:00:30'),
-(3, 'Montassar Billeh Hazgui', 'hello@giscon.tn', '$2y$12$o1PYVh4QfP4Mcv8.HfnFwO0iJ./0enXSXU.XG9zL9yqhqL.pwuOyy', 'rep', 1, '[1,3,13,16,17,23]', NULL, '20726000', NULL, 1, NULL, '2026-04-09 10:58:57');
+(3, 'Montassar Billeh Hazgui', 'hello@giscon.tn', '$2y$12$o1PYVh4QfP4Mcv8.HfnFwO0iJ./0enXSXU.XG9zL9yqhqL.pwuOyy', 'rep', 1, '[1,3,13,16,17,20,23,24]', NULL, '20726000', NULL, 1, NULL, '2026-04-09 10:58:57'),
+(4, 'Mootez Billeh Hazgui', 'mootez.hazgui@giscon.tn', '$2y$12$vt/wrHEHQaeHfDRWh8fVjertiuLloYM7XLsZZ6BhRNw8Xu/72Ai3a', 'rep', 18, NULL, NULL, '53911128', NULL, 1, NULL, '2026-04-09 18:37:22');
 
 -- --------------------------------------------------------
 
@@ -681,7 +706,7 @@ ALTER TABLE `cities`
 -- AUTO_INCREMENT for table `contacts`
 --
 ALTER TABLE `contacts`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `governorates`
@@ -693,7 +718,7 @@ ALTER TABLE `governorates`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `stock`
@@ -717,7 +742,7 @@ ALTER TABLE `stock_movements`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `visits`

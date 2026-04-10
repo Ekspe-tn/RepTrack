@@ -435,18 +435,17 @@ function updateContactList() {
             `;
             listDiv.appendChild(div);
         });
-        document.getElementById('optimizeRoute').disabled = contactList.length < 2;
-        
-        // Add change listeners to contact checkboxes
-        const contactCheckboxes = listDiv.querySelectorAll('.contact-checkbox');
-        contactCheckboxes.forEach(cb => {
-            cb.addEventListener('change', function() {
-                const checkedCount = document.querySelectorAll('.contact-checkbox:checked').length;
-                document.getElementById('optimizeRoute').disabled = checkedCount < 2;
-            });
-        });
+        document.getElementById('optimizeRoute').disabled = true; // Start disabled, user must check boxes
     }
 }
+
+// Use event delegation for contact checkboxes
+document.getElementById('contactList').addEventListener('change', function(e) {
+    if (e.target.classList.contains('contact-checkbox')) {
+        const checkedCount = document.querySelectorAll('.contact-checkbox:checked').length;
+        document.getElementById('optimizeRoute').disabled = checkedCount < 2;
+    }
+});
 
 // Select all contacts toggle
 document.getElementById('selectAllContacts').addEventListener('click', function() {
