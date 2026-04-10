@@ -435,7 +435,9 @@ function updateContactList() {
             `;
             listDiv.appendChild(div);
         });
-        document.getElementById('optimizeRoute').disabled = true; // Start disabled, user must check boxes
+        // Check initial state of checkboxes
+        const initialCheckedCount = listDiv.querySelectorAll('.contact-checkbox:checked').length;
+        document.getElementById('optimizeRoute').disabled = initialCheckedCount < 2;
     }
 }
 
