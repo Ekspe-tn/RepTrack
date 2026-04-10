@@ -61,12 +61,44 @@ try {
     
     if ($user['role'] === 'rep') {
         $userId = $user['id'];
-        $sql .= " AND (FIND_IN_SET(ci.governorate_id, 
-            (SELECT governorates FROM users WHERE id = ?)
-        ) > 0)";
-        $stmt = db()->prepare($sql . " ORDER BY c.name");
-        $stmt->execute([$userId]);
-        $contacts = $stmt->fetchAll();
+        // Filter contacts by assigned governorates using JSON
+        try {
+            $sql .= " AND JSON_CONTAINS(
+                (SELECT JSON_EXTRACT(governorate_ids, '$') FROM users WHERE id = ?),
+                CAST(ci.governorate_id AS JSON)
+            )";
+            $stmt = db()->prepare($sql . " ORDER BY c.name");
+            $stmt->execute([$userId]);
+            $contacts = $stmt->fetchAll();
+        } catch (Throwable $e) {
+            // Fallback to old governorates column (comma-separated)
+            try {
+                $sql = "SELECT c.id, c.name, c.type, c.latitude, c.longitude, c.city_id, 
+                    ci.name_fr AS city_name, ci.governorate_id, g.name_fr AS governorate_name
+                    FROM contacts c
+                    LEFT JOIN cities ci ON ci.id = c.city_id
+                    LEFT JOIN governorates g ON g.id = ci.governorate_id
+                    WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL";
+                $sql .= " AND FIND_IN_SET(ci.governorate_id, 
+                    (SELECT governorates FROM users WHERE id = ?)
+                ) > 0";
+                $stmt = db()->prepare($sql . " ORDER BY c.name");
+                $stmt->execute([$userId]);
+                $contacts = $stmt->fetchAll();
+            } catch (Throwable $e2) {
+                // If both fail, filter by single governorate_id
+                $sql = "SELECT c.id, c.name, c.type, c.latitude, c.longitude, c.city_id, 
+                    ci.name_fr AS city_name, ci.governorate_id, g.name_fr AS governorate_name
+                    FROM contacts c
+                    LEFT JOIN cities ci ON ci.id = c.city_id
+                    LEFT JOIN governorates g ON g.id = ci.governorate_id
+                    WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL";
+                $sql .= " AND ci.governorate_id = (SELECT governorate_id FROM users WHERE id = ?)";
+                $stmt = db()->prepare($sql . " ORDER BY c.name");
+                $stmt->execute([$userId]);
+                $contacts = $stmt->fetchAll();
+            }
+        }
     } else {
         $contacts = db()->query($sql . " ORDER BY c.name")->fetchAll();
     }
