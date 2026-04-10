@@ -153,7 +153,7 @@ require __DIR__ . '/../includes/header.php';
   <!-- Header -->
   <div class="bg-white rounded-2xl shadow-sm p-4">
     <h1 class="text-xl font-bold text-slate-900">Planificateur d'Itineraire</h1>
-    <p class="text-sm text-slate-500 mt-1">Planifiez vos visites et optimisez votre route avec l'aide de l'IA</p>
+    <p class="text-sm text-slate-500 mt-1">Planifiez vos visites et optimisez votre route</p>
   </div>
 
   <?php if ($success !== ''): ?>
@@ -241,7 +241,7 @@ require __DIR__ . '/../includes/header.php';
       <div>
         <button type="button" id="optimizeRoute" class="w-full h-12 rounded-xl bg-green-600 text-white font-semibold flex items-center justify-center gap-2 hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
           <i class="fas fa-route"></i>
-          <span>Optimiser la route avec l'IA</span>
+          <span>Optimiser la route</span>
         </button>
       </div>
     </div>
