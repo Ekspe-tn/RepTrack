@@ -436,6 +436,15 @@ function updateContactList() {
             listDiv.appendChild(div);
         });
         document.getElementById('optimizeRoute').disabled = contactList.length < 2;
+        
+        // Add change listeners to contact checkboxes
+        const contactCheckboxes = listDiv.querySelectorAll('.contact-checkbox');
+        contactCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('.contact-checkbox:checked').length;
+                document.getElementById('optimizeRoute').disabled = checkedCount < 2;
+            });
+        });
     }
 }
 
@@ -444,6 +453,10 @@ document.getElementById('selectAllContacts').addEventListener('click', function(
     const checkboxes = document.querySelectorAll('.contact-checkbox');
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
     checkboxes.forEach(cb => cb.checked = !allChecked);
+    
+    // Update button state
+    const checkedCount = document.querySelectorAll('.contact-checkbox:checked').length;
+    document.getElementById('optimizeRoute').disabled = checkedCount < 2;
 });
 
 // Optimize route button
