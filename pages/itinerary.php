@@ -232,6 +232,10 @@ require __DIR__ . '/../includes/header.php';
         <div id="contactList" class="space-y-2 max-h-64 overflow-y-auto">
           <!-- Will be populated by JavaScript -->
         </div>
+        <div id="noContactsMessage" class="hidden text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          Aucun contact avec coordonnees GPS dans cette delegation. Veuillez ajouter des coordonnees GPS aux contacts.
+        </div>
         <button type="button" id="selectAllContacts" class="mt-2 text-xs text-blue-600 hover:text-blue-800">
           Tout selectionner / Tout deselectionner
         </button>
@@ -405,28 +409,34 @@ function updateContactList() {
     const contactContainer = document.getElementById('contactContainer');
     contactContainer.classList.remove('hidden');
     const listDiv = document.getElementById('contactList');
+    const noContactsMessage = document.getElementById('noContactsMessage');
     listDiv.innerHTML = '';
     
-    contactList.forEach(contact => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50';
-        div.innerHTML = `
-            <input type="checkbox" class="contact-checkbox w-4 h-4 rounded border-slate-300" 
-                data-contact-id="${contact.id}" 
-                data-lat="${contact.lat}" 
-                data-lng="${contact.lng}"
-                data-name="${contact.name}"
-                data-type="${contact.type}">
-            <div class="flex-1">
-                <span class="text-sm text-slate-900">${contact.name}</span>
-                <span class="text-xs text-slate-500 ml-2">(${contact.type})</span>
-            </div>
-            <i class="fas fa-map-marker-alt text-slate-400"></i>
-        `;
-        listDiv.appendChild(div);
-    });
-    
-    document.getElementById('optimizeRoute').disabled = contactList.length < 2;
+    if (contactList.length === 0) {
+        noContactsMessage.classList.remove('hidden');
+        document.getElementById('optimizeRoute').disabled = true;
+    } else {
+        noContactsMessage.classList.add('hidden');
+        contactList.forEach(contact => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50';
+            div.innerHTML = `
+                <input type="checkbox" class="contact-checkbox w-4 h-4 rounded border-slate-300" 
+                    data-contact-id="${contact.id}" 
+                    data-lat="${contact.lat}" 
+                    data-lng="${contact.lng}"
+                    data-name="${contact.name}"
+                    data-type="${contact.type}">
+                <div class="flex-1">
+                    <span class="text-sm text-slate-900">${contact.name}</span>
+                    <span class="text-xs text-slate-500 ml-2">(${contact.type})</span>
+                </div>
+                <i class="fas fa-map-marker-alt text-slate-400"></i>
+            `;
+            listDiv.appendChild(div);
+        });
+        document.getElementById('optimizeRoute').disabled = contactList.length < 2;
+    }
 }
 
 // Select all contacts toggle
